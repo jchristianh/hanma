@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Syntax & Tests
-    runs-on: ubuntu-latest
+    runs-on: ansible-dev-fedora
 
     steps:
       - name: Checkout

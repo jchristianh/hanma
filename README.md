@@ -198,7 +198,7 @@ python -m pytest tests/ -v
 ```
 
 CI runs automatically via Gitea Actions on every push and pull request to
-`main`, running on a self-hosted Fedora runner.
+`main`, running on a self-hosted Fedora Docker container (`ansible-dev-fedora`).
 
 ## Customisation
 
