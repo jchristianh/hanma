@@ -198,7 +198,8 @@ python -m pytest tests/ -v
 ```
 
 CI runs automatically via Gitea Actions on every push and pull request to
-`main`, across three self-hosted runners: CentOS, Fedora, and Debian.
+`main`. Three jobs run concurrently across self-hosted CentOS, Fedora, and
+Debian runners.
 
 ## Customisation
 
