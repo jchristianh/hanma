@@ -198,7 +198,7 @@ python -m pytest tests/ -v
 ```
 
 CI runs automatically via Gitea Actions on every push and pull request to
-`main`, testing against Python 3.10, 3.11, and 3.12.
+`main`, across three self-hosted runners: CentOS, Fedora, and Debian.
 
 ## Customisation
 
