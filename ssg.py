@@ -27,6 +27,7 @@ import webbrowser
 from pathlib import Path
 from datetime import datetime
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from typing import Optional
 
 try:
     import markdown
@@ -722,7 +723,7 @@ def collect_page_info(md_path: Path) -> tuple[str, str]:
 
 
 def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
-                       nav_pages: list[tuple] | None = None) -> Path:
+                       nav_pages: Optional[list] = None) -> Path:
     """Read a .md file and write the HTML output to out_path.
 
     nav_pages is a list of (out_html_path, title) tuples for every page being
