@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 source .venv/bin/activate
 pip install markdown pygments pymdown-extensions pyyaml
 
-# Generate HTML from ./site/ in-place (default)
+# Generate HTML into ./output/ (default)
 ./ssg.py
 
 # Generate into a separate output directory
@@ -100,5 +100,5 @@ Select a theme with `--theme NAME` (default: `default`). The `themes/default/` t
 ## Design Philosophy
 
 - **Minimal core, extensible themes** — `ssg.py` handles discovery, parsing, and orchestration; visual presentation is fully delegated to the active theme.
-- **In-place output by default** — `.html` files are written next to their source `.md` files unless `--output` is specified, in which case the source tree is mirrored into that directory.
+- **Output directory by default** — `.html` files are written to `./output/` (relative to `ssg.py`) unless `--output DIR` is specified, in which case the source tree is mirrored into that directory. Source `.md` files are never modified.
 - **Self-contained output** — generated HTML embeds all CSS/JS inline; do not introduce CDN dependencies.

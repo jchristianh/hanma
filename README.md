@@ -6,7 +6,7 @@ no configuration file required.
 
 ## Features
 
-- Converts `.md` / `.markdown` files to `.html` — in-place by default, or into
+- Converts `.md` / `.markdown` files to `.html` — written to `./output/` by default, or into
   a separate output directory with `--output`
 - Recurses into sub-directories automatically, mirroring the source tree
 - Defaults to `./site/` as the content root (falls back to current directory)
@@ -158,7 +158,7 @@ project/
 |---|---|---|
 | `path` | `./site/` | Markdown file or directory to convert |
 | `--name` | `Blog` | Site name displayed in the page header |
-| `--output DIR` | — | Directory to write generated HTML files (default: alongside source) |
+| `--output DIR` | `./output/` | Directory to write generated HTML files |
 | `--dry-run` | — | List matched files without writing HTML |
 | `--serve [PORT]` | — | Start a local HTTP server after generating; optional inline port |
 | `--port PORT` | `8000` | Port for the local HTTP server (alternative to `--serve PORT`) |
