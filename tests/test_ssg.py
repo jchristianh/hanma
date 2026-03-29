@@ -266,20 +266,23 @@ class TestConvertMdToHtml:
 class TestCLIInPlace:
     def test_converts_single_file(self, tmp_path):
         src = write(tmp_path / "page.md", "# Page\n\nContent.")
-        run(str(src))
-        assert (tmp_path / "page.html").exists()
+        out_dir = tmp_path / "out"
+        run(str(src), "--output", str(out_dir))
+        assert (out_dir / "page.html").exists()
 
     def test_converts_directory(self, tmp_path):
         write(tmp_path / "a.md", "# A\n\nContent.")
         write(tmp_path / "b.md", "# B\n\nContent.")
-        run(str(tmp_path))
-        assert (tmp_path / "a.html").exists()
-        assert (tmp_path / "b.html").exists()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        assert (out_dir / "a.html").exists()
+        assert (out_dir / "b.html").exists()
 
     def test_recurses_into_subdirs(self, tmp_path):
         write(tmp_path / "sub" / "page.md", "# Sub\n\nContent.")
-        run(str(tmp_path))
-        assert (tmp_path / "sub" / "page.html").exists()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        assert (out_dir / "sub" / "page.html").exists()
 
     def test_nonexistent_path_exits_nonzero(self):
         result = subprocess.run(
@@ -366,8 +369,9 @@ class TestCLIDryRun:
 class TestCLIName:
     def test_site_name_appears_in_output(self, tmp_path):
         write(tmp_path / "page.md", "# Page\n\nContent.")
-        run(str(tmp_path), "--name", "MyAwesomeSite")
-        html = (tmp_path / "page.html").read_text()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir), "--name", "MyAwesomeSite")
+        html = (out_dir / "page.html").read_text()
         assert "MyAwesomeSite" in html
 
 
@@ -380,29 +384,33 @@ class TestNavigation:
     def test_nav_links_present_for_multiple_pages(self, tmp_path):
         write(tmp_path / "index.md", "# Home\n\nWelcome.")
         write(tmp_path / "about.md", "# About\n\nInfo.")
-        run(str(tmp_path))
-        html = (tmp_path / "index.html").read_text()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        html = (out_dir / "index.html").read_text()
         assert "about.html" in html
 
     def test_current_page_marked(self, tmp_path):
         write(tmp_path / "index.md", "# Home\n\nWelcome.")
         write(tmp_path / "about.md", "# About\n\nInfo.")
-        run(str(tmp_path))
-        html = (tmp_path / "about.html").read_text()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        html = (out_dir / "about.html").read_text()
         assert 'aria-current="page"' in html
 
     def test_index_labelled_home(self, tmp_path):
         write(tmp_path / "index.md", "# Welcome\n\nContent.")
         write(tmp_path / "other.md", "# Other\n\nContent.")
-        run(str(tmp_path))
-        html = (tmp_path / "other.html").read_text()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        html = (out_dir / "other.html").read_text()
         assert "Home" in html
 
     def test_index_link_appears_before_other_pages(self, tmp_path):
         write(tmp_path / "index.md", "# Home\n\nContent.")
         write(tmp_path / "about.md", "# About\n\nContent.")
-        run(str(tmp_path))
-        html = (tmp_path / "about.html").read_text()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        html = (out_dir / "about.html").read_text()
         assert html.index("index.html") < html.index("about.html")
 
 
@@ -414,24 +422,28 @@ class TestNavigation:
 class TestEdgeCases:
     def test_empty_file_does_not_crash(self, tmp_path):
         write(tmp_path / "empty.md", "")
-        run(str(tmp_path))
-        assert (tmp_path / "empty.html").exists()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        assert (out_dir / "empty.html").exists()
 
     def test_file_with_no_headings(self, tmp_path):
         write(tmp_path / "plain.md", "Just some text with no headings.")
-        run(str(tmp_path))
-        assert (tmp_path / "plain.html").exists()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        assert (out_dir / "plain.html").exists()
 
     def test_unicode_content(self, tmp_path):
         write(tmp_path / "unicode.md", "# Ünïcödé\n\nCafé naïve résumé.")
-        run(str(tmp_path))
-        html = (tmp_path / "unicode.html").read_text(encoding="utf-8")
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        html = (out_dir / "unicode.html").read_text(encoding="utf-8")
         assert "Ünïcödé" in html
 
     def test_deeply_nested_subdirectory(self, tmp_path):
         write(tmp_path / "a" / "b" / "c" / "deep.md", "# Deep\n\nContent.")
-        run(str(tmp_path))
-        assert (tmp_path / "a" / "b" / "c" / "deep.html").exists()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        assert (out_dir / "a" / "b" / "c" / "deep.html").exists()
 
 
 # ===========================================================================
@@ -555,9 +567,10 @@ class TestFrontMatterIntegration:
     def test_draft_page_skipped_by_cli(self, tmp_path):
         write(tmp_path / "draft.md", "---\ndraft: true\n---\n# Draft\n\nContent.")
         write(tmp_path / "page.md", "# Page\n\nContent.")
-        run(str(tmp_path))
-        assert not (tmp_path / "draft.html").exists()
-        assert (tmp_path / "page.html").exists()
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir))
+        assert not (out_dir / "draft.html").exists()
+        assert (out_dir / "page.html").exists()
 
     def test_no_front_matter_still_works(self, tmp_path):
         src = write(tmp_path / "plain.md", "# Plain\n\nNo front matter.")
@@ -566,3 +579,62 @@ class TestFrontMatterIntegration:
         assert out.exists()
         html = out.read_text()
         assert "Plain" in html
+
+
+# ===========================================================================
+# 14. Themes
+# ===========================================================================
+
+
+class TestThemes:
+    def test_default_theme_loads(self):
+        template, theme_dir = ssg.load_theme("default")
+        import string
+        assert isinstance(template, string.Template)
+        assert "$title" in template.template
+        assert theme_dir.name == "default"
+
+    def test_missing_theme_exits_nonzero(self):
+        result = subprocess.run(
+            [sys.executable, str(SSG), "--theme", "nonexistent", str(SSG.parent / "site")],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode != 0
+        assert "not found" in result.stdout + result.stderr
+
+    def test_theme_flag_accepted(self, tmp_path):
+        write(tmp_path / "page.md", "# Page\n\nContent.")
+        out_dir = tmp_path / "out"
+        run(str(tmp_path), "--output", str(out_dir), "--theme", "default")
+        assert (out_dir / "page.html").exists()
+
+    def test_theme_assets_copied_to_output(self, tmp_path):
+        import string
+        # Create a minimal custom theme with an extra asset
+        theme_dir = tmp_path / "themes" / "custom"
+        theme_dir.mkdir(parents=True)
+        # Write a minimal template with all required placeholders
+        default_template = (ssg._THEMES_DIR / "default" / "template.html").read_text()
+        (theme_dir / "template.html").write_text(default_template)
+        (theme_dir / "custom.css").write_text("body { color: red; }")
+
+        out_dir = tmp_path / "dist"
+        out_dir.mkdir()
+
+        original_themes_dir = ssg._THEMES_DIR
+        ssg._THEMES_DIR = tmp_path / "themes"
+        try:
+            ssg.copy_theme_assets(theme_dir, out_dir)
+        finally:
+            ssg._THEMES_DIR = original_themes_dir
+
+        assert (out_dir / "custom.css").exists()
+        assert not (out_dir / "template.html").exists()
+
+    def test_template_html_not_copied_as_asset(self, tmp_path):
+        out_dir = tmp_path / "dist"
+        out_dir.mkdir()
+        theme_dir = ssg._THEMES_DIR / "default"
+        ssg.copy_theme_assets(theme_dir, out_dir)
+        assert not (out_dir / "template.html").exists()
