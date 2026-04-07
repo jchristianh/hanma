@@ -415,5 +415,3 @@ Visual styling is fully delegated to the active theme. See the **Themes** sectio
 ## License
 
 GPLv2 — see [LICENSE](LICENSE) for the full text.
-E) for the full text.
-e full text.

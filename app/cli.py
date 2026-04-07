@@ -104,6 +104,12 @@ Examples:
     help="Port for the local HTTP server (default: 8000)",
   )
   parser.add_argument(
+    "--host",
+    default=None,
+    metavar="ADDR",
+    help="Bind address for the local HTTP server (default: 127.0.0.1)",
+  )
+  parser.add_argument(
     "--watch",
     action="store_true",
     help="Watch source files and regenerate on changes after initial build",
@@ -269,7 +275,7 @@ Examples:
     print(f"  ✓  {target.name}  →  {out_html}")
     print(f"\nDone.  1 converted, 0 errors.")
     if effective_serve:
-      _serve(output_dir, effective_port)
+      _serve(output_dir, effective_port, effective_host)
     return
 
   # ── Load theme ────────────────────────────────────────────────────────
@@ -368,4 +374,3 @@ def _serve(serve_dir: Path, port: int, host: str = "127.0.0.1") -> None:
     server.serve_forever()
   except KeyboardInterrupt:
     print("\nServer stopped.")
-nServer stopped.")
