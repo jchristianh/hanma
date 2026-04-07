@@ -24,4 +24,4 @@ VOLUME ["/site", "/output"]
 EXPOSE 8000
 
 ENTRYPOINT ["python", "/hanma/hanma.py"]
-CMD ["--serve", "--host", "0.0.0.0", "--output", "/output", "/site"]
+CMD ["--output", "/output", "/site"]
