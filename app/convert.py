@@ -17,6 +17,14 @@
 import html
 import os
 import string
+try:
+  from markupsafe import Markup
+except ImportError:
+  # Fallback for older Jinja2 or if markupsafe isn't standalone
+  try:
+    from jinja2 import Markup
+  except ImportError:
+    Markup = str
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -114,9 +122,9 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
     author_line = ""
 
   # Meta tags for head
-  author_meta = f'<meta name="author" content="{html.escape(fm_author)}" />\n  ' if fm_author else ""
+  author_meta = Markup(f'<meta name="author" content="{html.escape(fm_author)}" />\n  ') if fm_author else ""
   if isinstance(fm_tags, list) and fm_tags:
-    keywords_meta = f'<meta name="keywords" content="{html.escape(", ".join(str(t) for t in fm_tags))}" />\n  '
+    keywords_meta = Markup(f'<meta name="keywords" content="{html.escape(", ".join(str(t) for t in fm_tags))}" />\n  ')
   else:
     keywords_meta = ""
 
@@ -125,7 +133,7 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
     fm_refresh = int(fm_refresh_raw)
   except (TypeError, ValueError):
     fm_refresh = 0
-  refresh_meta = f'<meta http-equiv="refresh" content="{fm_refresh}" />\n  ' if fm_refresh > 0 else ""
+  refresh_meta = Markup(f'<meta http-equiv="refresh" content="{fm_refresh}" />\n  ') if fm_refresh > 0 else ""
 
   extensions = [
     MetaExtension(),
