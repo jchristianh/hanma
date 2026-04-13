@@ -40,9 +40,11 @@ except ImportError as exc:
 
 try:
   import bleach
+  from bleach.css_sanitizer import CSSSanitizer
   _BLEACH_AVAILABLE = True
 except ImportError:
   _BLEACH_AVAILABLE = False
+  CSSSanitizer = None
 
 from app.nav import build_nav_html, get_nav_data
 from app.pages import _normalize_tag, _search_json_url
@@ -98,7 +100,7 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
   fm_tags = front.get("tags", [])
 
   # Build a human-readable date string from front matter date field
-  fm_date_str = parse_date_field(fm_date_raw, tz_name=timezone)
+  fm_date_str = parse_date_field(fm_date_raw, tz_name=timezone, source_path=md_path)
 
   # Footer attribution line (author and/or date)
   fm_author_esc = html.escape(fm_author)
@@ -153,18 +155,24 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
         'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol',
         'strong', 'ul', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'pre', 'div',
         'span', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'hr', 'br',
-        'del', 'sup', 'sub', 'dl', 'dt', 'dd', 'details', 'summary', 'em'
+        'del', 'sup', 'sub', 'dl', 'dt', 'dd', 'details', 'summary'
       ]
       allowed_attrs = {
         '*': ['class', 'id', 'style'],
         'a': ['href', 'title', 'rel', 'aria-current'],
         'img': ['src', 'alt', 'title', 'width', 'height'],
       }
-      return bleach.clean(html_str, tags=allowed_tags, attributes=allowed_attrs)
+      css_san = CSSSanitizer() if CSSSanitizer else None
+      return bleach.clean(html_str, tags=allowed_tags, attributes=allowed_attrs, css_sanitizer=css_san)
     return html_str
 
   content_html = _clean_if_needed(content_html)
   author_line = _clean_if_needed(author_line)
+  title = _clean_if_needed(title)
+  description = _clean_if_needed(description)
+  author_meta = _clean_if_needed(author_meta)
+  keywords_meta = _clean_if_needed(keywords_meta)
+  refresh_meta = _clean_if_needed(refresh_meta)
 
   # Build structured tags for templates
   page_tags = []
@@ -199,8 +207,8 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
   last_updated = mtime.strftime("%H:%M %m/%d/%Y").replace(" ", " &mdash; ", 1)
   source_rel = md_path.name
 
-  sitemap_link = '<a href="sitemap.xml">Sitemap</a>' if base_url else ""
-  search_url = _search_json_url(out_path, output_root, base_url)
+  sitemap_link = _clean_if_needed('<a href="sitemap.xml">Sitemap</a>' if base_url else "")
+  search_url = _clean_if_needed(_search_json_url(out_path, output_root, base_url))
 
   # Logic for browser <title>:
   # 1. Homepage (root index.html) shows only site_name
