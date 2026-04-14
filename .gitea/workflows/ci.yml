@@ -55,21 +55,29 @@ jobs:
           cd hanma
           git checkout ${{ github.ref_name }}
 
+      - name: Prepare Docker Metadata
+        run: |
+          # Sanitize repository name and branch for Docker (lowercase, replace / with -)
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          TAG_SAFE=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed 's/\//-/g')
+          
+          echo "IMAGE_FULL_PATH=${{ vars.REGISTRY }}/${REPO_LOWER}:${TAG_SAFE}" >> $GITHUB_ENV
+
       - name: Docker Login
         run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login --username ${{ secrets.REGISTRY_USER }} --password-stdin ${{ vars.REGISTRY }}
 
       - name: Build Image
         run: |
           cd hanma
-          docker build --no-cache -t ${{ vars.REGISTRY }}/${{ github.repository }}/${{ vars.BUILD_NAME }}:${{ github.ref_name }} .
+          docker build --no-cache -t ${IMAGE_FULL_PATH} .
 
       - name: Push Image
         run: |
-          docker push ${{ vars.REGISTRY }}/${{ github.repository }}/${{ vars.BUILD_NAME }}:${{ github.ref_name }}
+          docker push ${IMAGE_FULL_PATH}
 
       - name: Cleanup Local Image
         run: |
-          docker rmi ${{ vars.REGISTRY }}/${{ github.repository }}/${{ vars.BUILD_NAME }}:${{ github.ref_name }}
+          docker rmi ${IMAGE_FULL_PATH}
 
       - name: Cleanup Docker Login
         if: always()
