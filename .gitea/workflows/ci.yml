@@ -2,14 +2,15 @@ name: CI
 
 on:
   push:
-    branches: ["develop"]
+    branches: ["main", "develop", "feat/**"]
   pull_request:
-    branches: ["develop"]
+    branches: ["develop", "feat/**"]
 
 jobs:
   test:
     name: Syntax & Tests
     runs-on: ansible-dev-fedora
+    if: github.ref_name != 'main'
 
     steps:
       - name: Checkout
@@ -25,3 +26,75 @@ jobs:
 
       - name: Run tests
         run: python3 -m pytest tests/ -v --tb=short
+
+  build-image:
+    name: Build & Push Docker Image
+    runs-on: self-hosted
+    needs: [test]
+    if: |
+      always() && (
+        (github.event_name == 'push' && github.ref_name == 'main') ||
+        (github.event_name == 'pull_request' && github.base_ref == 'develop' && needs.test.result == 'success')
+      )
+    defaults:
+      run:
+        working-directory: /home/builds/src
+    steps:
+      - name: Cleanup Stale Artifacts
+        run: rm -rfv *
+
+      - name: Environment Check
+        run: |
+          echo "BUILD_USER: $(whoami)" && echo
+          echo "PWD: $(pwd)" && echo
+          hostnamectl && echo
+          lscpu && echo
+          env && echo
+          docker info && echo
+
+      - name: Clone Repository
+        run: |
+          git clone https://gitea.thezengarden.net/Python/hanma.git
+          cd hanma
+          git checkout ${{ github.head_ref || github.ref_name }}
+
+      - name: Prepare Docker Metadata
+        run: |
+          # Sanitize repository name
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          # Use base_ref for PRs (target branch) or ref_name for pushes
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TAG_SAFE=$(echo "${{ github.base_ref }}" | tr '[:upper:]' '[:lower:]')
+          else
+            TAG_SAFE=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed 's/\//-/g')
+          fi
+          
+          # Map 'main' branch to 'latest' tag
+          if [ "$TAG_SAFE" = "main" ]; then
+            TAG_SAFE="latest"
+          fi
+          
+          echo "IMAGE_FULL_PATH=${{ vars.REGISTRY }}/${REPO_LOWER}:${TAG_SAFE}" >> $GITHUB_ENV
+
+      - name: Docker Login
+        run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login --username ${{ secrets.REGISTRY_USER }} --password-stdin ${{ vars.REGISTRY }}
+
+      - name: Build Image
+        run: |
+          cd hanma
+          docker build --no-cache -f Containerfile -t ${IMAGE_FULL_PATH} .
+
+      - name: Push Image
+        run: |
+          docker push ${IMAGE_FULL_PATH}
+
+      - name: Cleanup Local Image
+        if: always()
+        run: |
+          docker rmi ${IMAGE_FULL_PATH} || true
+          docker image prune -f
+
+      - name: Cleanup Docker Login
+        if: always()
+        run: rm -v /home/builds/.docker/config.json
