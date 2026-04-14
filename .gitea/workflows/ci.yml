@@ -69,7 +69,7 @@ jobs:
       - name: Build Image
         run: |
           cd hanma
-          docker build --no-cache -t ${IMAGE_FULL_PATH} .
+          docker build --no-cache -f Containerfile -t ${IMAGE_FULL_PATH} .
 
       - name: Push Image
         run: |
