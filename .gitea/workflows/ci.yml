@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["develop", "feat/**"]
+    branches: ["main", "develop", "feat/**"]
   pull_request:
     branches: ["develop", "feat/**"]
 
@@ -10,6 +10,7 @@ jobs:
   test:
     name: Syntax & Tests
     runs-on: ansible-dev-fedora
+    if: github.ref_name != 'main'
 
     steps:
       - name: Checkout
@@ -30,6 +31,7 @@ jobs:
     name: Build & Push Docker Image
     runs-on: self-hosted
     needs: [test]
+    if: always() && (needs.test.result == 'success' || github.ref_name == 'main')
     defaults:
       run:
         working-directory: /home/builds/src
@@ -57,6 +59,11 @@ jobs:
           # Sanitize repository name and branch for Docker (lowercase, replace / with -)
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           TAG_SAFE=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed 's/\//-/g')
+          
+          # Map 'main' branch to 'latest' tag
+          if [ "$TAG_SAFE" = "main" ]; then
+            TAG_SAFE="latest"
+          fi
           
           echo "IMAGE_FULL_PATH=${{ vars.REGISTRY }}/${REPO_LOWER}:${TAG_SAFE}" >> $GITHUB_ENV
 
