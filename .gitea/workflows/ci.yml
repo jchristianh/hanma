@@ -31,7 +31,11 @@ jobs:
     name: Build & Push Docker Image
     runs-on: self-hosted
     needs: [test]
-    if: always() && (needs.test.result == 'success' || github.ref_name == 'main')
+    if: |
+      always() && (
+        (github.event_name == 'push' && github.ref_name == 'main') ||
+        (github.event_name == 'pull_request' && github.base_ref == 'develop' && needs.test.result == 'success')
+      )
     defaults:
       run:
         working-directory: /home/builds/src
@@ -56,9 +60,15 @@ jobs:
 
       - name: Prepare Docker Metadata
         run: |
-          # Sanitize repository name and branch for Docker (lowercase, replace / with -)
+          # Sanitize repository name
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          TAG_SAFE=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed 's/\//-/g')
+          
+          # Use base_ref for PRs (target branch) or ref_name for pushes
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TAG_SAFE=$(echo "${{ github.base_ref }}" | tr '[:upper:]' '[:lower:]')
+          else
+            TAG_SAFE=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed 's/\//-/g')
+          fi
           
           # Map 'main' branch to 'latest' tag
           if [ "$TAG_SAFE" = "main" ]; then
