@@ -56,7 +56,7 @@ jobs:
         run: |
           git clone https://gitea.thezengarden.net/Python/hanma.git
           cd hanma
-          git checkout ${{ github.ref_name }}
+          git checkout ${{ github.head_ref || github.ref_name }}
 
       - name: Prepare Docker Metadata
         run: |
