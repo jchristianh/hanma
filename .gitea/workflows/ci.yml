@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["main", "feat/**"]
+    branches: ["**"]
   pull_request:
     branches: ["develop"]
 
@@ -54,7 +54,7 @@ jobs:
 
       - name: Clone Repository
         run: |
-          git clone https://gitea.thezengarden.net/project-hanma/hanma.git
+          git clone ${{ github.server_url }}/${{ github.repository }}.git
           cd hanma
           git checkout ${{ github.head_ref || github.ref_name }}
 
