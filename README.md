@@ -20,12 +20,12 @@ It builds your blog. That's mostly it.
 ## Screenshots
 
 <p align="center">
-  <img src="assets/hanma_home_light.png" alt="Home Light" width="400" />
-  <img src="assets/hanma_home_dark.png" alt="Home Dark" width="400" />
+  <a href="assets/hanma_home_light.png"><img src="assets/hanma_home_light.png" alt="Home Light" width="400" /></a>
+  <a href="assets/hanma_home_dark.png"><img src="assets/hanma_home_dark.png" alt="Home Dark" width="400" /></a>
 </p>
 <p align="center">
-  <img src="assets/hanma_blog_light.png" alt="Blog Light" width="400" />
-  <img src="assets/hanma_blog_dark.png" alt="Blog Dark" width="400" />
+  <a href="assets/hanma_blog_light.png"><img src="assets/hanma_blog_light.png" alt="Blog Light" width="400" /></a>
+  <a href="assets/hanma_blog_dark.png"><img src="assets/hanma_blog_dark.png" alt="Blog Dark" width="400" /></a>
 </p>
 
 ## Quick Start
