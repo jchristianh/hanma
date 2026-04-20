@@ -35,7 +35,7 @@ except ImportError:
 class _HanmaEventHandler(_WatchdogHandler):
   """Watchdog event handler: triggers a debounced rebuild on any relevant change."""
 
-  _RELEVANT_SUFFIXES = {".md", ".markdown", ".yaml", ".css", ".js"}
+  _RELEVANT_SUFFIXES = {".md", ".markdown", ".yaml", ".yml", ".css", ".js"}
   _TRIGGER_TYPES = {"created", "deleted", "modified", "moved"}
 
   def __init__(self, rebuild_fn, source_root: Path, theme_dir: Path, output_dir: Optional[Path] = None) -> None:

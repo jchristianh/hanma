@@ -34,6 +34,8 @@ from app import __version__, _THEMES_DIR
 _PROJECT_ROOT = Path(__file__).parent.parent
 _CONF_DIR = _PROJECT_ROOT / "conf"
 
+_NOT_SET = object()
+
 
 def main() -> None:
   if sys.version_info < (3, 10):
@@ -85,6 +87,7 @@ Examples:
     "--serve",
     nargs="?",
     const=8000,
+    default=_NOT_SET,
     type=int,
     metavar="PORT",
     help="Start a local HTTP server after generating, optionally on PORT (default: 8000)",
@@ -235,9 +238,12 @@ Examples:
   effective_timezone = site_config.get("timezone",    None)
 
   # Resolve effective serve port: explicit --serve N > --port N > config port > 8000
-  if args.serve is not None:
+  if args.serve is not _NOT_SET:
     effective_serve = True
-    effective_port  = args.serve if args.serve != 8000 else args.port
+    # If user passed just --serve, it's const=8000. 
+    # If they passed --serve 9000, it's 9000.
+    # In either case, if they EXPLICITLY passed --serve, it wins over --port.
+    effective_port = args.serve if args.serve is not None else 8000
   elif cfg_serve:
     effective_serve = True
     effective_port  = cfg_port
