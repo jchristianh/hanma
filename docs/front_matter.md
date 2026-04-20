@@ -35,6 +35,24 @@ All fields are optional.
 | `draft` | bool | If `true`, the page is silently skipped during generation |
 | `refresh` | int | Auto-refresh interval in seconds — injects `<meta http-equiv="refresh">` into the page head; omit or set to `0` to disable |
 | `sort_index` | int | Navigation sort priority (starting at `1`); lower values appear earlier; pages without `sort_index` retain their default alphabetical order but appear after all pages that have one. |
+| `link` | object | Navigation link override; `url` (string) and `target` (string: `tab`, `window`, or `same`) |
+
+## Navigation Link Overrides
+
+You can use the `link` field in your front matter to create navigation items that point to external websites or custom paths. When a `link.url` is present, it takes precedence over the page's generated relative URL in the site navigation.
+
+```yaml
+---
+title: My Twitter
+link:
+  url: https://twitter.com/example
+  target: tab
+---
+```
+
+Valid `target` options:
+- `tab` or `window`: Opens in a new tab (`target="_blank"`).
+- `same`: Opens in the same window (`target="_self"`).
 
 ## Generated Pages
 

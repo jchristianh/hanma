@@ -37,14 +37,14 @@
       {% for item in nav_items %}
       <li{% if item.is_current %} class="nav-current"{% endif %}>
         {% if item.url %}
-        <a href="{{ item.url }}"{% if item.is_current %} aria-current="page"{% endif %}>{{ item.title }}</a>
+        <a href="{{ item.url }}"{% if item.target %} target="{{ item.target }}"{% endif %}{% if item.target == '_blank' %} rel="noopener noreferrer"{% endif %}{% if item.is_current %} aria-current="page"{% endif %}>{{ item.title }}</a>
         {% else %}
         <span class="nav-folder">{{ item.title }}</span>
         {% endif %}
         {% if item.children %}
         <ul>
           {% for child in item.children %}
-          <li>{% if child.is_more_link %}<a href="{{ child.url }}"><span class="nav-more-posts-sep"></span><span class="nav-more-posts">{{ child.title }}</span></a>{% else %}<a href="{{ child.url }}"{% if child.is_current %} style="font-weight:600;color:var(--accent)"{% endif %}>{{ child.title }}</a>{% endif %}</li>
+          <li>{% if child.is_more_link %}<a href="{{ child.url }}"><span class="nav-more-posts-sep"></span><span class="nav-more-posts">{{ child.title }}</span></a>{% else %}<a href="{{ child.url }}"{% if child.target %} target="{{ child.target }}"{% endif %}{% if child.target == '_blank' %} rel="noopener noreferrer"{% endif %}{% if child.is_current %} style="font-weight:600;color:var(--accent)"{% endif %}>{{ child.title }}</a>{% endif %}</li>
           {% endfor %}
         </ul>
         {% endif %}
