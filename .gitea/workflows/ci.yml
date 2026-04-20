@@ -41,7 +41,7 @@ jobs:
         working-directory: /home/builds/src
     steps:
       - name: Cleanup Stale Artifacts
-        run: rm -rfv *
+        run: rm -rfv /home/builds/src/* /home/builds/src/.[!.]*
 
       - name: Environment Check
         run: |

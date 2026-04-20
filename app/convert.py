@@ -16,6 +16,7 @@
 # <https://www.gnu.org/licenses/>.
 import html
 import os
+import sys
 import string
 try:
   from markupsafe import Markup
@@ -133,9 +134,16 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
   fm_refresh_raw = front_matter.get("refresh")
   try:
     fm_refresh = int(fm_refresh_raw)
+    if fm_refresh > 0:
+      # Clamp to [1, 86400] (1 second to 24 hours)
+      fm_refresh = max(1, min(86400, fm_refresh))
   except (TypeError, ValueError):
     fm_refresh = 0
   refresh_meta = Markup(f'<meta http-equiv="refresh" content="{fm_refresh}" />\n  ') if fm_refresh > 0 else ""
+
+  if sanitize and not _BLEACH_AVAILABLE:
+    print("Warning: sanitization requested but 'bleach' is not installed. HTML will NOT be sanitized.", file=sys.stderr)
+    print("To fix, run: pip install bleach tinycss2", file=sys.stderr)
 
   extensions = [
     MetaExtension(),

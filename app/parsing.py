@@ -106,8 +106,9 @@ def localize_datetime(dt: datetime, tz_name: Optional[str] = None) -> datetime:
   """
   tz = _resolve_tz(tz_name)
   if dt.tzinfo is None:
-    # Treat as system local time, then localize
-    return dt.replace(tzinfo=timezone.utc).astimezone(tz)
+    # Treat as system local time, then localize to target tz
+    # dt.astimezone(tz) automatically treats naive dt as local system time.
+    return dt.astimezone(tz)
   return dt.astimezone(tz)
 
 

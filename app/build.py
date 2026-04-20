@@ -131,7 +131,10 @@ def _collect_all_pages(files: list[Path], root: Path, output_dir: Path, timezone
           mtime = datetime.fromtimestamp(md_path.stat().st_mtime)
           date_dt = localize_datetime(mtime, tz_name=timezone)
         except OSError:
-          date_dt = datetime.min
+          # Use a localized fallback to avoid aware/naive comparison crashes.
+          # We use 1970-01-01 as a stable 'min' date.
+          fallback_min = datetime(1970, 1, 1)
+          date_dt = localize_datetime(fallback_min, tz_name=timezone)
       dated_pages.append((out_html, title, date_dt, description))
 
     try:

@@ -54,7 +54,7 @@ def compute_nav_signature(nav_pages: list, posts_out: Optional[Path] = None,
   
   # Stable sort for a consistent hash
   entries.sort()
-  return hashlib.md5("\n".join(entries).encode()).hexdigest()
+  return hashlib.sha256("\n".join(entries).encode()).hexdigest()
 
 
 def compute_text_hash(text: str) -> str:
@@ -117,6 +117,9 @@ def page_needs_rebuild(md_path: Path, out_html: Path, manifest: dict,
     except (OSError, TypeError):
       return True
   else:
+    # entry must be a string and length must match SHA-256 (64 hex chars)
+    if not isinstance(entry, str) or len(entry) != 64:
+      return True
     if md_hash != entry:
       return True
 
