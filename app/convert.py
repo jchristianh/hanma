@@ -16,6 +16,7 @@
 # <https://www.gnu.org/licenses/>.
 import html
 import os
+import sys
 import string
 try:
   from markupsafe import Markup
