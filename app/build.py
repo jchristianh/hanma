@@ -254,8 +254,8 @@ def _run_build(root: Path, output_dir: Path, site_name: str,
       return False
 
   nav_pages = [
-    (out_html, title, md_path, layout, sort_index)
-    for md_path, out_html, title, layout, sort_index, *rest in all_files
+    (out_html, title, md_path, layout, sort_index, front.get("link"))
+    for md_path, out_html, title, layout, sort_index, front, *rest in all_files
     if not _in_posts_dir(md_path)
   ] if len(all_files) > 1 else []
 
