@@ -30,7 +30,7 @@ def compute_nav_signature(nav_pages: list, posts_out: Optional[Path] = None,
              recent_posts: Optional[list] = None) -> str:
   """Return a stable hash of the current nav page set.
 
-  nav_pages is a list of (out_html, title, md_path, layout) tuples.
+  nav_pages is a list of (out_html, title, md_path, layout, sort_index, link_data) tuples.
   The signature covers the output paths and titles so that any addition,
   removal, or rename forces a full nav rebuild.
   Also includes posts_out so that adding/removing the first post triggers
@@ -38,7 +38,14 @@ def compute_nav_signature(nav_pages: list, posts_out: Optional[Path] = None,
   Includes recent_posts titles and paths so changes in the blog dropdown
   trigger a rebuild of the nav on all pages.
   """
-  entries = [str(out_html) for out_html, *_ in nav_pages]
+  entries = []
+  for entry in nav_pages:
+    page_html, page_title = entry[0], entry[1]
+    link_data = entry[5] if len(entry) > 5 else None
+    entries.append(f"PAGE:{page_html}:{page_title}")
+    if isinstance(link_data, dict) and link_data.get("url"):
+      entries.append(f"LINK:{link_data.get('url')}:{link_data.get('target', '')}")
+
   if posts_out:
     entries.append(f"POSTS:{posts_out}")
   if recent_posts:

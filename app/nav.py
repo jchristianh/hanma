@@ -37,6 +37,7 @@ def get_nav_data(current_out_html: Path,
     is_current: bool
     is_folder: bool
     children: list[dict] (optional)
+    target: str (optional)
   """
   if not nav_pages and posts_out is None:
     return []
@@ -55,9 +56,25 @@ def get_nav_data(current_out_html: Path,
     except ValueError:
       return 0
 
+  def _apply_link_logic(item: dict, link_data, default_url: str):
+    """Apply external link overrides to a nav item."""
+    if isinstance(link_data, dict) and link_data.get("url"):
+      item["url"] = link_data.get("url")
+      target = str(link_data.get("target", "")).lower().strip()
+      if target in ("tab", "window"):
+        item["target"] = "_blank"
+      elif target == "same":
+        item["target"] = "_self"
+      elif target:
+        item["target"] = target
+    else:
+      item["url"] = default_url
+
   groups: dict = OrderedDict()
   for entry in nav_pages:
-    page_html, page_title, md_path, layout, sort_index = entry
+    # entry is (out_html, title, md_path, layout, sort_index, optional link_data)
+    page_html, page_title, md_path, layout, sort_index = entry[:5]
+    link_data = entry[5] if len(entry) > 5 else None
     depth = _depth(page_html)
 
     if output_root is not None:
@@ -90,14 +107,16 @@ def get_nav_data(current_out_html: Path,
   for dir_key, group in groups.items():
     if dir_key == "":
       for entry in group["children"]:
-        page_html, page_title, md_path, layout, sort_index = entry
+        page_html, page_title, md_path, layout, sort_index = entry[:5]
+        link_data = entry[5] if len(entry) > 5 else None
         is_current = page_html == current_out_html
         item = {
           "title": page_title,
-          "url": _rel_url(page_html),
           "is_current": is_current,
           "is_folder": False
         }
+        _apply_link_logic(item, link_data, _rel_url(page_html))
+
         if page_html.stem.lower() == "index" and (
           output_root is None or page_html.parent == output_root
         ):
@@ -108,22 +127,28 @@ def get_nav_data(current_out_html: Path,
       idx = group["index"]
       children = group["children"]
       if idx is not None:
-        idx_html, _, _, _, idx_si = idx
-        idx_title = dir_key.replace("-", " ").replace("_", " ").title()
+        idx_html, idx_title, _, _, idx_si = idx[:5]
+        idx_link = idx[5] if len(idx) > 5 else None
+        # dir_key based title for the folder
+        folder_title = dir_key.replace("-", " ").replace("_", " ").title()
         item = {
-          "title": idx_title,
-          "url": _rel_url(idx_html),
+          "title": folder_title,
           "is_current": idx_html == current_out_html,
           "is_folder": True,
           "children": []
         }
-        for child_html, child_title, _, _, _ in sorted(children, key=lambda e: _si_key(e[4])):
-          item["children"].append({
+        _apply_link_logic(item, idx_link, _rel_url(idx_html))
+
+        for child_entry in sorted(children, key=lambda e: _si_key(e[4])):
+          child_html, child_title, _, _, _ = child_entry[:5]
+          child_link = child_entry[5] if len(child_entry) > 5 else None
+          child_item = {
             "title": child_title,
-            "url": _rel_url(child_html),
             "is_current": child_html == current_out_html,
             "is_folder": False
-          })
+          }
+          _apply_link_logic(child_item, child_link, _rel_url(child_html))
+          item["children"].append(child_item)
         pending.append((idx_si, item))
       else:
         if children:
@@ -131,17 +156,20 @@ def get_nav_data(current_out_html: Path,
           item = {
             "title": dir_key.replace("-", " ").replace("_", " ").title(),
             "url": None,
-            "is_current": any(ch == current_out_html for ch, *_ in children),
+            "is_current": any(ch_entry[0] == current_out_html for ch_entry in children),
             "is_folder": True,
             "children": []
           }
-          for child_html, child_title, _, _, _ in sorted(children, key=lambda e: _si_key(e[4])):
-            item["children"].append({
+          for child_entry in sorted(children, key=lambda e: _si_key(e[4])):
+            child_html, child_title, _, _, _ = child_entry[:5]
+            child_link = child_entry[5] if len(child_entry) > 5 else None
+            child_item = {
               "title": child_title,
-              "url": _rel_url(child_html),
               "is_current": child_html == current_out_html,
               "is_folder": False
-            })
+            }
+            _apply_link_logic(child_item, child_link, _rel_url(child_html))
+            item["children"].append(child_item)
           pending.append((group_si, item))
 
   pending.sort(key=lambda t: _si_key(t[0]))
