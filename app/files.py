@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see
 # <https://www.gnu.org/licenses/>.
+import errno
 import shutil
 import sys
 from pathlib import Path
@@ -75,7 +76,10 @@ def clean_stale_html(output_dir: Path, expected_html: set[Path]) -> list[Path]:
           try:
             parent.rmdir()  # only removes if empty
             parent = parent.parent
-          except OSError:
+          except OSError as exc:
+            # Narrow to 'directory not empty' or 'directory exists'
+            if exc.errno not in (errno.ENOTEMPTY, errno.EEXIST):
+              raise
             break
       except OSError as exc:
         print(f"  [clean] warning: could not remove {html_file}: {exc}", file=sys.stderr)
