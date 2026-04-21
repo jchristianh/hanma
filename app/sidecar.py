@@ -16,8 +16,66 @@
 # <https://www.gnu.org/licenses/>.
 import html
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+
+def build_rss_xml(posts: list[tuple], output_root: Path, base_url: str,
+          site_name: str = "Blog", site_description: str = "") -> Optional[Path]:
+  """Write feed.xml (RSS 2.0) to output_root. Returns None if base_url is empty.
+
+  posts is a list of (out_html_path, title, date_dt, description) tuples.
+  date_dt should be an aware datetime object.
+  """
+  if not base_url:
+    return None
+
+  base = base_url.rstrip("/")
+  pub_date = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+  lines = [
+    '<?xml version="1.0" encoding="UTF-8" ?>',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+    '  <channel>',
+    f'    <title>{html.escape(site_name)}</title>',
+    f'    <link>{html.escape(base)}/</link>',
+    f'    <description>{html.escape(site_description or site_name)}</description>',
+    f'    <lastBuildDate>{pub_date}</lastBuildDate>',
+    f'    <atom:link href="{html.escape(base)}/feed.xml" rel="self" type="application/rss+xml" />',
+    f'    <generator>Hanma SSG</generator>'
+  ]
+
+  for out_path, title, date_dt, description in posts:
+    try:
+      rel = out_path.relative_to(output_root).as_posix()
+    except ValueError:
+      rel = out_path.name
+    
+    link = f"{base}/{rel}"
+    guid = link # Use URL as GUID
+    
+    # RFC 822 format for RSS: "Mon, 02 Jan 2006 15:04:05 MST"
+    if date_dt.tzinfo == timezone.utc:
+      date_rfc = date_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    else:
+      date_rfc = date_dt.strftime("%a, %d %b %Y %H:%M:%S %z")
+
+    lines.append('    <item>')
+    lines.append(f'      <title>{html.escape(title)}</title>')
+    lines.append(f'      <link>{html.escape(link)}</link>')
+    lines.append(f'      <guid isPermaLink="true">{html.escape(guid)}</guid>')
+    lines.append(f'      <pubDate>{date_rfc}</pubDate>')
+    if description:
+      lines.append(f'      <description>{html.escape(description)}</description>')
+    lines.append('    </item>')
+
+  lines.append('  </channel>')
+  lines.append('</rss>')
+
+  out = output_root / "feed.xml"
+  out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+  return out
 
 
 def build_sitemap_xml(pages: list[tuple], output_root: Path, base_url: str) -> Optional[Path]:

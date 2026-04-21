@@ -45,6 +45,8 @@ To create a custom theme:
 | `last_updated` | string | File modification timestamp |
 | `sitemap_link` | string | **(HTML)** Link to `sitemap.xml` |
 | `search_json_url` | string | URL to `search.json` (relative or absolute) |
+| `base_url` | string | Absolute base URL from config |
+| `page_url` | string | URL of the current page relative to output root |
 
 ### Custom Navigation Loop
 
