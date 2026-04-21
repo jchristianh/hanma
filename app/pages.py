@@ -128,13 +128,25 @@ def build_tag_index_html(tag: str, pages: list[tuple], out_path: Path,
              search_enabled: bool = True) -> Path:
   """Generate a tag index page listing all pages tagged with tag.
 
-  pages is a list of (out_html_path, title, date_str) tuples, sorted by date.
+  pages is a list of (out_html_path, title, date_val) tuples, sorted by date.
+  date_val can be a datetime object or a string.
   """
   safe_tag = html.escape(tag)
   items = []
-  for page_html_path, page_title, date_str in pages:
+  for page_html_path, page_title, date_val in pages:
     rel_url = html.escape(_rel_url(page_html_path, out_path.parent), quote=True)
     safe_title = html.escape(page_title)
+    
+    if isinstance(date_val, datetime):
+      # Use a simpler format if it's exactly midnight (likely from YYYY-MM-DD front matter).
+      if date_val.hour == 0 and date_val.minute == 0 and date_val.second == 0:
+        fmt = "%B %d, %Y"
+      else:
+        fmt = "%B %d, %Y @ %I:%M %p"
+      date_str = date_val.strftime(fmt)
+    else:
+      date_str = str(date_val) if date_val else ""
+
     date_span = f' <span class="post-date">{html.escape(date_str)}</span>' if date_str else ""
     items.append(f'  <li><a href="{rel_url}">{safe_title}</a>{date_span}</li>')
 

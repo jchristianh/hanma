@@ -19,14 +19,14 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 try:
   from zoneinfo import ZoneInfo
 except ImportError:
   # Fallback for systems without zoneinfo (e.g. very old Python 3.9 on Windows)
   # Hanma requires 3.10+, where zoneinfo is built-in.
-  ZoneInfo = None
+  ZoneInfo = None  # type: ignore
 
 try:
   import yaml

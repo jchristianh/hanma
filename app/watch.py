@@ -19,7 +19,7 @@ import string
 import threading
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 from app.build import _run_build
 from app.files import find_markdown_files
@@ -30,7 +30,7 @@ try:
   _WATCHDOG_AVAILABLE = True
 except ImportError:
   _WATCHDOG_AVAILABLE = False
-  _WatchdogHandler = object  # fallback base class
+  _WatchdogHandler = object  # type: ignore # fallback base class
 
 
 class _HanmaEventHandler(_WatchdogHandler):
