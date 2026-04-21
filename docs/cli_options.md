@@ -40,7 +40,7 @@
 # Sanitize generated HTML using bleach (optional)
 ./hanma.py --sanitize
 
-# Generate sitemap.xml and absolute URLs in search.json
+# Generate sitemap.xml, feed.xml, and canonical links
 ./hanma.py --base-url https://example.com
 
 # Use a config file explicitly
@@ -75,7 +75,7 @@
 | `path` | `./site/` | Markdown file or directory to convert |
 | `--name NAME` | `Blog` | Site name displayed in the page header |
 | `--output DIR` | `./output/` | Directory to write generated HTML files |
-| `--base-url URL` | — | Absolute base URL; enables `sitemap.xml` and absolute URLs in `search.json` |
+| `--base-url URL` | — | Absolute base URL; enables `sitemap.xml`, `feed.xml`, and absolute URLs for canonical links |
 | `--config FILE` | `conf/hanma.yml` | Path to a config file; overrides default lookup order |
 | `--theme NAME` | `default` | Theme to use from the `themes/` directory |
 | `--dry-run` | — | List matched files without writing HTML |

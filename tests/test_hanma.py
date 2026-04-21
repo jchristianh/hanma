@@ -1026,7 +1026,74 @@ class TestSitemap:
 
 
 # ===========================================================================
-# 23. Site config file (hanma.yaml)
+# 23. RSS generation
+# ===========================================================================
+
+class TestRSS:
+  def test_rss_generated_with_base_url(self, tmp_path):
+    (tmp_path / "posts").mkdir()
+    write(tmp_path / "posts/one.md", "---\ntitle: Post One\ndate: 2026-01-01\n---\nContent.")
+    out_dir = tmp_path / "out"
+    run(str(tmp_path), "--output", str(out_dir), "--base-url", "https://example.com")
+    assert (out_dir / "feed.xml").exists()
+
+  def test_rss_contains_absolute_urls(self, tmp_path):
+    (tmp_path / "posts").mkdir()
+    write(tmp_path / "posts/one.md", "---\ntitle: Post One\ndate: 2026-01-01\n---\nContent.")
+    out_dir = tmp_path / "out"
+    run(str(tmp_path), "--output", str(out_dir), "--base-url", "https://example.com")
+    feed = (out_dir / "feed.xml").read_text()
+    assert "https://example.com/posts/one.html" in feed
+    assert "<title>Post One</title>" in feed
+
+  def test_rss_is_valid_xml(self, tmp_path):
+    (tmp_path / "posts").mkdir()
+    write(tmp_path / "posts/one.md", "---\ntitle: Post One\ndate: 2026-01-01\n---\nContent.")
+    out_dir = tmp_path / "out"
+    run(str(tmp_path), "--output", str(out_dir), "--base-url", "https://example.com")
+    import xml.etree.ElementTree as ET
+    tree = ET.parse(out_dir / "feed.xml")
+    root_elem = tree.getroot()
+    assert root_elem.tag == "rss"
+
+  def test_rss_not_generated_without_base_url(self, tmp_path):
+    (tmp_path / "posts").mkdir()
+    write(tmp_path / "posts/one.md", "---\ntitle: Post One\ndate: 2026-01-01\n---\nContent.")
+    out_dir = tmp_path / "out"
+    run(str(tmp_path), "--output", str(out_dir))
+    assert not (out_dir / "feed.xml").exists()
+
+
+# ===========================================================================
+# 24. Canonical links
+# ===========================================================================
+
+class TestCanonicalLinks:
+  def test_canonical_link_added_with_base_url(self, tmp_path):
+    write(tmp_path / "index.md", "# Home")
+    out_dir = tmp_path / "out"
+    run(str(tmp_path), "--output", str(out_dir), "--base-url", "https://example.com")
+    index = (out_dir / "index.html").read_text()
+    assert '<link rel="canonical" href="https://example.com/index.html" />' in index
+
+  def test_canonical_link_nested_page(self, tmp_path):
+    (tmp_path / "subdir").mkdir()
+    write(tmp_path / "subdir/page.md", "# Page")
+    out_dir = tmp_path / "out"
+    run(str(tmp_path), "--output", str(out_dir), "--base-url", "https://example.com")
+    page = (out_dir / "subdir/page.html").read_text()
+    assert '<link rel="canonical" href="https://example.com/subdir/page.html" />' in page
+
+  def test_no_canonical_link_without_base_url(self, tmp_path):
+    write(tmp_path / "index.md", "# Home")
+    out_dir = tmp_path / "out"
+    run(str(tmp_path), "--output", str(out_dir))
+    index = (out_dir / "index.html").read_text()
+    assert 'rel="canonical"' not in index
+
+
+# ===========================================================================
+# 25. Site config file (hanma.yaml)
 # ===========================================================================
 
 

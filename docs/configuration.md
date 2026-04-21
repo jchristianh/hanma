@@ -4,7 +4,7 @@ A `conf/hanma.yml` file (next to `hanma.py`) sets project-level defaults. CLI fl
 
 ```yaml
 name: My Site           # site name shown in header
-base_url: https://...   # used for sitemap.xml and absolute URLs in search.json
+base_url: https://...   # used for sitemap.xml, feed.xml, and canonical URLs
 output: dist/           # output directory
 theme: default          # theme name
 serve: false            # start HTTP server after build (true/false)
