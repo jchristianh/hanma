@@ -74,7 +74,7 @@ def get_nav_data(current_out_html: Path,
   groups: dict = OrderedDict()
   for entry in nav_pages:
     # entry is (out_html, title, md_path, layout, sort_index, optional link_data)
-    page_html, page_title, md_path, layout, sort_index = entry[:5]
+    page_html, page_title, _, _, sort_index = entry[:5]
     link_data = entry[5] if len(entry) > 5 else None
     depth = _depth(page_html)
 
@@ -108,7 +108,7 @@ def get_nav_data(current_out_html: Path,
   for dir_key, group in groups.items():
     if dir_key == "":
       for entry in group["children"]:
-        page_html, page_title, md_path, layout, sort_index = entry[:5]
+        page_html, page_title, _, _, sort_index = entry[:5]
         link_data = entry[5] if len(entry) > 5 else None
         is_current = page_html == current_out_html
         item = {
@@ -128,7 +128,7 @@ def get_nav_data(current_out_html: Path,
       idx = group["index"]
       children = group["children"]
       if idx is not None:
-        idx_html, idx_title, _, _, idx_si = idx[:5]
+        idx_html, _, _, _, idx_si = idx[:5]
         idx_link = idx[5] if len(idx) > 5 else None
         # dir_key based title for the folder
         folder_title = dir_key.replace("-", " ").replace("_", " ").title()
