@@ -153,7 +153,7 @@ def extract_date_dt(fm_date_raw, tz_name: Optional[str] = None, source_path: Opt
       return dt.replace(tzinfo=tz)
     # PyYAML parses YYYY-MM-DD as datetime.date
     return datetime(fm_date_raw.year, fm_date_raw.month, fm_date_raw.day, tzinfo=tz)
-  except (ValueError, AttributeError, TypeError) as exc:
+  except (ValueError, AttributeError, TypeError):
     loc = f" in {source_path}" if source_path else ""
     print(f"Warning: invalid date '{fm_date_raw}'{loc} — using fallback.", file=sys.stderr)
     return None

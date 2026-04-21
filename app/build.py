@@ -55,7 +55,7 @@ def _process_page_worker(md_path: Path, out_html: Path, site_name: str,
     nav_pages=nav_pages, template=template,
     tags_out_dir=tags_out_dir,
     base_url=base_url, output_root=output_root,
-    layout=layout,
+    _layout=layout,
     posts_out=posts_out, posts_label=posts_label,
     sanitize=sanitize,
     timezone=timezone,
@@ -164,7 +164,7 @@ def _generate_sidecar_files(all_files: list, output_dir: Path,
   if base_url:
     # ── Generate sitemap.xml ──────────────────────────────────────────────
     sitemap_pages = []
-    for _, out_html, *rest in all_files:
+    for _, out_html, *_ in all_files:
       try:
         mtime = out_html.stat().st_mtime
         lastmod = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d")

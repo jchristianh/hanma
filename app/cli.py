@@ -303,7 +303,7 @@ Examples:
 
   # ── Run the build ─────────────────────────────────────────────────────
   print(f"Building '{site_name}'  →  {output_dir}\n")
-  ok, errors, skipped = _run_build(
+  _run_build(
     root, output_dir, site_name, theme_template, theme_dir,
     base_url=base_url,
     incremental=effective_incremental,
