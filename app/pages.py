@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see
 # <https://www.gnu.org/licenses/>.
+"""Page discovery and metadata collection for Hanma."""
 import html
 import os
 import re

@@ -1,1 +1,2 @@
-__version__ = "0.3.57"
+"""Version information for Hanma."""
+__version__ = "0.3.58"

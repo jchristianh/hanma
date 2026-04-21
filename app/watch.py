@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see
 # <https://www.gnu.org/licenses/>.
+"""File watching and auto-rebuild functionality for Hanma."""
 import string
 import threading
 import time
@@ -154,7 +155,7 @@ def _watch_polling(root: Path, output_dir: Path, site_name: str,
       changed = [p for p in current_files
            if current_mtimes.get(p) != last_mtimes.get(p)]
       if changed or deleted:
-        print(f"\n  [watch] change detected, rebuilding...")
+        print("\n  [watch] change detected, rebuilding...")
         _run_build(root, output_dir, site_name, template, theme_dir,
              base_url=base_url, posts_label=posts_label,
              config_path=config_path,
@@ -195,7 +196,7 @@ def watch_and_rebuild(root: Path, output_dir: Path, site_name: str,
     return
 
   def rebuild():
-    print(f"\n  [watch] change detected, rebuilding...")
+    print("\n  [watch] change detected, rebuilding...")
     try:
       _run_build(root, output_dir, site_name, template, theme_dir,
            base_url=base_url, posts_label=posts_label,
