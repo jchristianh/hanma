@@ -159,7 +159,7 @@ def _generate_sidecar_files(all_files: list, output_dir: Path,
                 dated_pages: list,
                 site_name: str = "Blog",
                 search_enabled: bool = True) -> None:
-  """Generate sitemap.xml, search.json, and feed.xml."""
+  """Generate sitemap.xml, feed.xml, and search.json."""
   if base_url:
     # ── Generate sitemap.xml ──────────────────────────────────────────────
     sitemap_pages = []
@@ -175,8 +175,6 @@ def _generate_sidecar_files(all_files: list, output_dir: Path,
       print(f"  [sitemap] sitemap.xml  ({len(sitemap_pages)} URL(s))")
 
     # ── Generate feed.xml (RSS) ───────────────────────────────────────────
-    # RSS feeds typically contain only 'post' layout pages.
-    # dated_pages is already sorted if we want, but build_rss_xml can handle it.
     rss_path = build_rss_xml(dated_pages, output_dir, base_url, site_name=site_name)
     if rss_path:
       print(f"  [rss]   feed.xml     ({len(dated_pages)} entry/entries)")
@@ -290,6 +288,12 @@ def _run_build(root: Path, output_dir: Path, site_name: str,
 
   nav_posts_out = posts_out_path if has_posts_listing else None
 
+  if base_url:
+    expected_html.add(output_dir / "sitemap.xml")
+    expected_html.add(output_dir / "feed.xml")
+  if search_enabled:
+    expected_html.add(output_dir / "search.json")
+
   if not dry_run:
     _prepare_output(output_dir, theme_dir, root, expected_html)
 
@@ -343,16 +347,9 @@ def _run_build(root: Path, output_dir: Path, site_name: str,
     ))
 
   if tasks:
-    # Use max_workers=None (default) to use all CPUs
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-      future_to_info = {
-        executor.submit(fn, *args): (rel, md_path, md_hash)
-        for fn, args, rel, md_hash in tasks
-      }
-      for future in concurrent.futures.as_completed(future_to_info):
-        rel, md_path, md_hash = future_to_info[future]
+    for fn, args, rel, md_hash in tasks:
         try:
-          out = future.result()
+          out = fn(*args)
           print(f"  ✓  {rel}  →  {out}")
           ok += 1
           if incremental and manifest_path is not None:
@@ -398,7 +395,7 @@ def _run_build(root: Path, output_dir: Path, site_name: str,
   elif posts_collision:
     print("  [posts] skipped: posts/index.md exists as source file")
 
-  # ── Generate sitemap.xml, feed.xml & search.json ───────────────────────
+  # ── Generate sidecar files ────────────────────────────────────────────
   _generate_sidecar_files(all_files, output_dir, base_url, search_entries, dated_pages,
               site_name=site_name, search_enabled=search_enabled)
 

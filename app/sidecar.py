@@ -56,7 +56,6 @@ def build_rss_xml(posts: list[tuple], output_root: Path, base_url: str,
     guid = link # Use URL as GUID
     
     # RFC 822 format for RSS: "Mon, 02 Jan 2006 15:04:05 MST"
-    # Note: %Z might be empty for aware UTC, so we hardcode GMT/UTC if it's UTC.
     if date_dt.tzinfo == timezone.utc:
       date_rfc = date_dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
     else:
