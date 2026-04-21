@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see
 # <https://www.gnu.org/licenses/>.
+"""Command-line interface for the Hanma static site generator."""
 import argparse
 import sys
 import threading
@@ -38,6 +39,7 @@ _NOT_SET = object()
 
 
 def main() -> None:
+  """Main entry point for the Hanma CLI tool."""
   if sys.version_info < (3, 10):
     sys.exit("Error: hanma.py requires Python 3.10 or later.")
 
@@ -284,7 +286,7 @@ Examples:
     copy_theme_assets(theme_dir, output_dir)
     convert_md_to_html(target, out_html, site_name, nav_pages=[], template=theme_template, sanitize=effective_sanitize, timezone=effective_timezone, search_enabled=effective_search)
     print(f"  ✓  {target.name}  →  {out_html}")
-    print(f"\nDone.  1 converted, 0 errors.")
+    print("\nDone.  1 converted, 0 errors.")
     if effective_serve:
       _serve(output_dir, effective_port, effective_host)
     return
@@ -350,6 +352,7 @@ def _serve(serve_dir: Path, port: int, host: str = "127.0.0.1") -> None:
   """Start a local HTTP server serving serve_dir."""
 
   class QuietHandler(SimpleHTTPRequestHandler):
+    """Custom HTTP handler that suppresses log messages."""
     def __init__(self, *a, **kw):
       super().__init__(*a, directory=str(serve_dir), **kw)
     def log_message(self, fmt, *a):
