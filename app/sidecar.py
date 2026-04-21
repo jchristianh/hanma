@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see
 # <https://www.gnu.org/licenses/>.
+"""Sidecar file generation (RSS, Search index) for Hanma."""
 import html
 import json
 from datetime import datetime, timezone
@@ -43,7 +44,7 @@ def build_rss_xml(posts: list[tuple], output_root: Path, base_url: str,
     f'    <description>{html.escape(site_description or site_name)}</description>',
     f'    <lastBuildDate>{pub_date}</lastBuildDate>',
     f'    <atom:link href="{html.escape(base)}/feed.xml" rel="self" type="application/rss+xml" />',
-    f'    <generator>Hanma SSG</generator>'
+    '    <generator>Hanma SSG</generator>'
   ]
 
   for out_path, title, date_dt, description in posts:

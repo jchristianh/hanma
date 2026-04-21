@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see
 # <https://www.gnu.org/licenses/>.
+"""Front matter and markdown parsing utilities for Hanma."""
 import re
 import sys
 from datetime import datetime, timezone
@@ -63,7 +64,7 @@ def parse_front_matter(md_text: str, source_path: Optional[Path] = None) -> tupl
       except yaml.YAMLError as exc:
         loc = f" in {source_path}" if source_path else ""
         print(f"Warning: malformed YAML front matter{loc} — metadata ignored", file=sys.stderr)
-        print(f"  Hint: if a value contains a colon, wrap it in quotes — e.g. title: \"My Title: Subtitle\"", file=sys.stderr)
+        print("  Hint: if a value contains a colon, wrap it in quotes — e.g. title: \"My Title: Subtitle\"", file=sys.stderr)
         print(f"  YAML error: {exc}", file=sys.stderr)
         meta = {}
       if not isinstance(meta, dict):
