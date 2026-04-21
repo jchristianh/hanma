@@ -4,6 +4,10 @@ PyYAML==6.0.3
 watchdog==6.0.0
 pytest==9.0.2
 bleach==6.2.0
+types-bleach
+types-Markdown
+types-PyYAML
+types-Jinja2
 tinycss2>=1.4.0
 html5lib>=1.1
 Jinja2==3.1.5
