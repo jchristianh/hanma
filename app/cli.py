@@ -38,11 +38,8 @@ _CONF_DIR = _PROJECT_ROOT / "conf"
 _NOT_SET = object()
 
 
-def main() -> None:
-  """Main entry point for the Hanma CLI tool."""
-  if sys.version_info < (3, 10):
-    sys.exit("Error: hanma.py requires Python 3.10 or later.")
-
+def _create_parser() -> argparse.ArgumentParser:
+  """Create and configure the argument parser."""
   parser = argparse.ArgumentParser(
     description="Convert Markdown files to HTML, recursively.",
     formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -155,44 +152,44 @@ Examples:
     action="store_true",
     help="With --init: overwrite existing files in the target directory",
   )
-  args = parser.parse_args()
+  return parser
 
-  print(f"hanma.py {__version__} — It builds your blog. That's mostly it.\n")
 
-  if args.list_themes:
-    if _THEMES_DIR.is_dir():
-      themes = sorted(d.name for d in _THEMES_DIR.iterdir() if d.is_dir())
-      if themes:
-        print("Available themes:")
-        for t in themes:
-          print(f"  {t}")
-      else:
-        print("No themes found in themes/")
+def _list_themes() -> None:
+  """List available themes and exit."""
+  if _THEMES_DIR.is_dir():
+    themes = sorted(d.name for d in _THEMES_DIR.iterdir() if d.is_dir())
+    if themes:
+      print("Available themes:")
+      for t in themes:
+        print(f"  {t}")
     else:
-      print("No themes/ directory found")
-    return
+      print("No themes found in themes/")
+  else:
+    print("No themes/ directory found")
 
-  if args.init:
-    site_dir = Path("site").resolve()
-    try:
-      init_scaffold(site_dir, force=args.force)
-    except RuntimeError as exc:
-      sys.exit(str(exc))
-    return
 
-  # ── Resolve default path: prefer ./site/, fall back to cwd ──────────────
-  if args.path is None:
+def _init_scaffold_cmd(force: bool) -> None:
+  """Scaffold a new site and exit."""
+  site_dir = Path("site").resolve()
+  try:
+    init_scaffold(site_dir, force=force)
+  except RuntimeError as exc:
+    sys.exit(str(exc))
+
+
+def _resolve_paths(args_path: Optional[str]) -> tuple[Path, Path]:
+  """Resolve the source directory and target path."""
+  if args_path is None:
     site_dir = Path("site").resolve()
     if site_dir.is_dir():
       raw_path = site_dir
     else:
       raw_path = Path(".").resolve()
   else:
-    raw_path = Path(args.path).resolve()
+    raw_path = Path(args_path).resolve()
 
   target = raw_path
-
-  # ── Resolve the list of files and a display root ───────────────────────
   if target.is_file():
     if target.suffix.lower() not in {".md", ".markdown"}:
       print(f"Error: '{target}' is not a Markdown file (.md / .markdown).")
@@ -204,32 +201,70 @@ Examples:
     print(f"Error: '{target}' is not a file or directory.")
     sys.exit(1)
 
-  # ── Load site config (hanma.yml / hanma.yaml) ────────────────────────────
-  # Lookup order: --config flag > conf/hanma.yml (next to hanma.py) > hanma.yml in source root
-  #               > hanma.yaml in source root (legacy fallback)
+  return root, target
+
+
+def _get_config_path(args_config: Optional[str], root: Path) -> Path:
+  """Determine the path to the configuration file."""
   def _find_default_config(base: Path) -> Path:
     for name in ("hanma.yml", "hanma.yaml"):
       p = base / name
       if p.is_file():
         return p
-    return base / "hanma.yml"  # non-existent sentinel; load_site_config returns {}
+    return base / "hanma.yml"
 
-  if args.config is not None:
-    config_path = Path(args.config).resolve()
-  else:
-    default_conf = _find_default_config(_CONF_DIR)
-    config_path = default_conf if default_conf.is_file() else _find_default_config(root)
+  if args_config is not None:
+    return Path(args_config).resolve()
+  
+  default_conf = _find_default_config(_CONF_DIR)
+  if default_conf.is_file():
+    return default_conf
+  return _find_default_config(root)
+
+
+def main() -> None:
+  """Main entry point for the Hanma CLI tool."""
+  if sys.version_info < (3, 10):
+    sys.exit("Error: hanma.py requires Python 3.10 or later.")
+
+  parser = _create_parser()
+  args = parser.parse_args()
+
+  print(f"hanma.py {__version__} — It builds your blog. That's mostly it.\n")
+
+  if args.list_themes:
+    _list_themes()
+    return
+
+  if args.init:
+    _init_scaffold_cmd(args.force)
+    return
+
+  root, target = _resolve_paths(args.path)
+  config_path = _get_config_path(args.config, root)
   site_config = load_site_config(config_path)
+  settings = _get_effective_settings(args, site_config)
 
-  # ── Merge CLI args with config (CLI always wins) ───────────────────────
-  site_name   = args.name     if args.name     is not None else site_config.get("name",   "Blog")
-  theme_name  = args.theme    if args.theme    is not None else site_config.get("theme",  "default")
-  base_url    = args.base_url if args.base_url is not None else site_config.get("base_url", "")
-  output_arg  = args.output   if args.output   is not None else site_config.get("output", None)
-  posts_label = str(site_config.get("posts_label", "Blog"))
+  if target.is_dir() and settings["output_dir"].is_relative_to(root):
+    print(f"Warning: output directory '{settings['output_dir']}' is inside the source directory '{root}'.")
+    print("  This will mix generated HTML with Markdown sources.")
 
-  # Boolean/int flags: CLI flag presence overrides config; config overrides built-in default
-  # --serve is a nargs="?" int (None = not passed, 8000 = passed without value)
+  if target.is_file():
+    _run_single_file_build(target, settings, args.dry_run)
+    return
+
+  _run_full_site_build(root, config_path, settings, args.dry_run)
+
+
+def _get_effective_settings(args: argparse.Namespace, site_config: dict) -> dict:
+  """Merge CLI args with config and return effective settings."""
+  settings = {}
+  settings["site_name"]   = args.name     if args.name     is not None else site_config.get("name",   "Blog")
+  settings["theme_name"]  = args.theme    if args.theme    is not None else site_config.get("theme",  "default")
+  settings["base_url"]    = args.base_url if args.base_url is not None else site_config.get("base_url", "")
+  settings["output_arg"]  = args.output   if args.output   is not None else site_config.get("output", None)
+  settings["posts_label"] = str(site_config.get("posts_label", "Blog"))
+
   cfg_serve       = site_config.get("serve",       False)
   cfg_port        = site_config.get("port",        8000)
   cfg_host        = site_config.get("host",        "127.0.0.1")
@@ -237,115 +272,113 @@ Examples:
   cfg_incremental = site_config.get("incremental", False)
   cfg_search      = site_config.get("search",      True)
   cfg_sanitize    = site_config.get("sanitize",    False)
-  effective_timezone = site_config.get("timezone",    None)
+  settings["effective_timezone"] = site_config.get("timezone",    None)
 
-  # Resolve effective serve port: explicit --serve N > --port N > config port > 8000
   if args.serve is not _NOT_SET:
-    effective_serve = True
-    # If user passed just --serve, it's const=8000. 
-    # If they passed --serve 9000, it's 9000.
-    # In either case, if they EXPLICITLY passed --serve, it wins over --port.
-    effective_port = args.serve if args.serve is not None else 8000
+    settings["effective_serve"] = True
+    settings["effective_port"] = args.serve if args.serve is not None else 8000
   elif cfg_serve:
-    effective_serve = True
-    effective_port  = cfg_port
+    settings["effective_serve"] = True
+    settings["effective_port"]  = cfg_port
   else:
-    effective_serve = False
-    effective_port  = args.port if args.port != 8000 else cfg_port
+    settings["effective_serve"] = False
+    settings["effective_port"]  = args.port if args.port != 8000 else cfg_port
 
-  effective_host = args.host if args.host is not None else cfg_host
-  effective_watch       = args.watch       or cfg_watch
-  effective_incremental = args.incremental or cfg_incremental
-  effective_search      = cfg_search
-  effective_sanitize    = args.sanitize    or cfg_sanitize
+  settings["effective_host"] = args.host if args.host is not None else cfg_host
+  settings["effective_watch"]       = args.watch       or cfg_watch
+  settings["effective_incremental"] = args.incremental or cfg_incremental
+  settings["effective_search"]      = cfg_search
+  settings["effective_sanitize"]    = args.sanitize    or cfg_sanitize
 
-  # ── Resolve output directory ───────────────────────────────────────────
-  if output_arg:
-    output_dir = Path(output_arg).resolve()
+  if settings["output_arg"]:
+    settings["output_dir"] = Path(settings["output_arg"]).resolve()
   else:
-    output_dir = (_PROJECT_ROOT / "output").resolve()
+    settings["output_dir"] = (_PROJECT_ROOT / "output").resolve()
 
-  if target.is_dir() and output_dir.is_relative_to(root):
-    print(f"Warning: output directory '{output_dir}' is inside the source directory '{root}'.")
-    print("  This will mix generated HTML with Markdown sources.")
+  return settings
 
-  # ── Handle single-file target: redirect to _run_build indirectly ──────
-  # For a single file, rebuild only that file; set root to its parent.
-  if target.is_file():
-    # Single-file mode: convert directly
-    try:
-      theme_template, theme_dir = _load_theme_impl(theme_name, _THEMES_DIR)
-    except ThemeError as exc:
-      print(f"Error: {exc}")
-      sys.exit(1)
-    out_html = output_dir / target.name.replace(target.suffix, ".html")
-    if args.dry_run:
-      print(f"  [dry-run] {target.name}  →  {out_html}")
-      return
-    out_html.parent.mkdir(parents=True, exist_ok=True)
-    copy_theme_assets(theme_dir, output_dir)
-    convert_md_to_html(target, out_html, site_name, nav_pages=[], template=theme_template, sanitize=effective_sanitize, timezone=effective_timezone, search_enabled=effective_search)
-    print(f"  ✓  {target.name}  →  {out_html}")
-    print("\nDone.  1 converted, 0 errors.")
-    if effective_serve:
-      _serve(output_dir, effective_port, effective_host)
-    return
 
-  # ── Load theme ────────────────────────────────────────────────────────
+def _run_single_file_build(target: Path, settings: dict, dry_run: bool) -> None:
+  """Convert a single Markdown file."""
   try:
-    theme_template, theme_dir = _load_theme_impl(theme_name, _THEMES_DIR)
+    theme_template, theme_dir = _load_theme_impl(settings["theme_name"], _THEMES_DIR)
+  except ThemeError as exc:
+    print(f"Error: {exc}")
+    sys.exit(1)
+  
+  out_html = settings["output_dir"] / target.name.replace(target.suffix, ".html")
+  if dry_run:
+    print(f"  [dry-run] {target.name}  →  {out_html}")
+    return
+  
+  out_html.parent.mkdir(parents=True, exist_ok=True)
+  copy_theme_assets(theme_dir, settings["output_dir"])
+  convert_md_to_html(
+    target, out_html, settings["site_name"], nav_pages=[], 
+    template=theme_template, sanitize=settings["effective_sanitize"], 
+    timezone=settings["effective_timezone"], search_enabled=settings["effective_search"]
+  )
+  print(f"  ✓  {target.name}  →  {out_html}")
+  print("\nDone.  1 converted, 0 errors.")
+  
+  if settings["effective_serve"]:
+    _serve(settings["output_dir"], settings["effective_port"], settings["effective_host"])
+
+
+def _run_full_site_build(root: Path, config_path: Path, settings: dict, dry_run: bool) -> None:
+  """Perform a full site build, potentially with watching and serving."""
+  try:
+    theme_template, theme_dir = _load_theme_impl(settings["theme_name"], _THEMES_DIR)
   except ThemeError as exc:
     print(f"Error: {exc}")
     sys.exit(1)
 
-  # ── Manifest path for incremental builds ─────────────────────────────
-  manifest_path = output_dir / ".hanma_manifest.json" if effective_incremental else None
+  manifest_path = settings["output_dir"] / ".hanma_manifest.json" if settings["effective_incremental"] else None
 
-  # ── Run the build ─────────────────────────────────────────────────────
-  print(f"Building '{site_name}'  →  {output_dir}\n")
+  print(f"Building '{settings['site_name']}'  →  {settings['output_dir']}\n")
   _run_build(
-    root, output_dir, site_name, theme_template, theme_dir,
-    base_url=base_url,
-    incremental=effective_incremental,
+    root, settings["output_dir"], settings["site_name"], theme_template, theme_dir,
+    base_url=settings["base_url"],
+    incremental=settings["effective_incremental"],
     manifest_path=manifest_path,
-    dry_run=args.dry_run,
-    posts_label=posts_label,
+    dry_run=dry_run,
+    posts_label=settings["posts_label"],
     config_path=config_path,
-    sanitize=effective_sanitize,
-    timezone=effective_timezone,
-    search_enabled=effective_search,
+    sanitize=settings["effective_sanitize"],
+    timezone=settings["effective_timezone"],
+    search_enabled=settings["effective_search"],
   )
 
-  if args.dry_run:
+  if dry_run:
     return
 
-  if effective_watch:
+  if settings["effective_watch"]:
     watch_kwargs = {
-      "base_url": base_url,
-      "posts_label": posts_label,
+      "base_url": settings["base_url"],
+      "posts_label": settings["posts_label"],
       "config_path": config_path,
-      "incremental": effective_incremental,
+      "incremental": settings["effective_incremental"],
       "manifest_path": manifest_path,
-      "sanitize": effective_sanitize,
-      "timezone": effective_timezone,
-      "search_enabled": effective_search,
+      "sanitize": settings["effective_sanitize"],
+      "timezone": settings["effective_timezone"],
+      "search_enabled": settings["effective_search"],
     }
-    if effective_serve:
+    if settings["effective_serve"]:
       watch_thread = threading.Thread(
         target=watch_and_rebuild,
-        args=(root, output_dir, site_name, theme_template, theme_dir),
+        args=(root, settings["output_dir"], settings["site_name"], theme_template, theme_dir),
         kwargs=watch_kwargs,
         daemon=True,
       )
       watch_thread.start()
     else:
-      watch_and_rebuild(root, output_dir, site_name, theme_template, theme_dir,
+      watch_and_rebuild(root, settings["output_dir"], settings["site_name"], theme_template, theme_dir,
                **watch_kwargs)
       return
 
-  if effective_serve:
+  if settings["effective_serve"]:
     print("\nStarting server…")
-    _serve(output_dir, effective_port, effective_host)
+    _serve(settings["output_dir"], settings["effective_port"], settings["effective_host"])
 
 
 def _serve(serve_dir: Path, port: int, host: str = "127.0.0.1") -> None:
