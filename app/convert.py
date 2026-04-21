@@ -26,10 +26,10 @@ except ImportError:
   try:
     from jinja2 import Markup
   except ImportError:
-    Markup = str
+    Markup = str  # type: ignore
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 try:
   import markdown
@@ -126,21 +126,24 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
     author_line = ""
 
   # Meta tags for head
-  author_meta = Markup(f'<meta name="author" content="{html.escape(fm_author)}" />\n  ') if fm_author else ""
+  author_meta = Markup(f'<meta name="author" content="{html.escape(fm_author)}" />\n  ') if fm_author else "" # type: ignore
   if isinstance(fm_tags, list) and fm_tags:
     keywords_meta = Markup(f'<meta name="keywords" content="{html.escape(", ".join(str(t) for t in fm_tags))}" />\n  ')
   else:
-    keywords_meta = ""
+    keywords_meta = "" # type: ignore
 
   fm_refresh_raw = front_matter.get("refresh")
   try:
-    fm_refresh = int(fm_refresh_raw)
-    if fm_refresh > 0:
-      # Clamp to [1, 86400] (1 second to 24 hours)
-      fm_refresh = max(1, min(86400, fm_refresh))
+    if fm_refresh_raw is not None:
+      fm_refresh = int(fm_refresh_raw)
+      if fm_refresh > 0:
+        # Clamp to [1, 86400] (1 second to 24 hours)
+        fm_refresh = max(1, min(86400, fm_refresh))
+    else:
+      fm_refresh = 0
   except (TypeError, ValueError):
     fm_refresh = 0
-  refresh_meta = Markup(f'<meta http-equiv="refresh" content="{fm_refresh}" />\n  ') if fm_refresh > 0 else ""
+  refresh_meta = Markup(f'<meta http-equiv="refresh" content="{fm_refresh}" />\n  ') if fm_refresh > 0 else "" # type: ignore
 
   if sanitize and not _BLEACH_AVAILABLE:
     print("Warning: sanitization requested but 'bleach' is not installed. HTML will NOT be sanitized.", file=sys.stderr)

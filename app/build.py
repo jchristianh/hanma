@@ -86,7 +86,7 @@ def _collect_all_pages(files: list[Path], root: Path, output_dir: Path, timezone
   """Pass 1: Collect titles, output paths, and derived data for all markdown files."""
   all_files = []
   drafts = 0
-  tags_map = {}
+  tags_map: dict[str, list[tuple[Path, str, datetime]]] = {}
   dated_pages = []
   search_entries = []
 
@@ -118,24 +118,25 @@ def _collect_all_pages(files: list[Path], root: Path, output_dir: Path, timezone
 
     all_files.append((md_path, out_html, title, layout, sort_index, front, body, md_hash))
 
+    # ── Date parsing for tags and post listing ──────────────────────────────
+    date_dt = extract_date_dt(front.get("date"), tz_name=timezone, source_path=md_path)
+    if date_dt is None:
+      try:
+        mtime = datetime.fromtimestamp(md_path.stat().st_mtime)
+        date_dt = localize_datetime(mtime, tz_name=timezone)
+      except OSError:
+        # Use a localized fallback to avoid aware/naive comparison crashes.
+        # We use 1970-01-01 as a stable 'min' date.
+        fallback_min = datetime(1970, 1, 1)
+        date_dt = localize_datetime(fallback_min, tz_name=timezone)
+
     fm_tags = front.get("tags", [])
     if isinstance(fm_tags, list):
       for tag in fm_tags:
         tag_str = str(tag)
-        date_str = parse_date_field(front.get("date"), tz_name=timezone, source_path=md_path)
-        tags_map.setdefault(tag_str, []).append((out_html, title, date_str))
+        tags_map.setdefault(tag_str, []).append((out_html, title, date_dt))
 
     if layout == "post":
-      date_dt = extract_date_dt(front.get("date"), tz_name=timezone, source_path=md_path)
-      if date_dt is None:
-        try:
-          mtime = datetime.fromtimestamp(md_path.stat().st_mtime)
-          date_dt = localize_datetime(mtime, tz_name=timezone)
-        except OSError:
-          # Use a localized fallback to avoid aware/naive comparison crashes.
-          # We use 1970-01-01 as a stable 'min' date.
-          fallback_min = datetime(1970, 1, 1)
-          date_dt = localize_datetime(fallback_min, tz_name=timezone)
       dated_pages.append((out_html, title, date_dt, description))
 
     try:
@@ -196,12 +197,14 @@ def _generate_tag_indices(tags_map: dict, tag_out_paths: dict, site_name: str,
   errors = 0
 
   def _tag_sort_key(entry):
-    _, _, date_str = entry
-    if date_str:
+    _, _, date_val = entry
+    if isinstance(date_val, datetime):
+      return (0, date_val)
+    if isinstance(date_val, str) and date_val:
       try:
-        return (0, datetime.strptime(date_str, "%B %d, %Y"))
+        return (0, datetime.strptime(date_val, "%B %d, %Y"))
       except ValueError:
-        print(f"Warning: malformed internal date '{date_str}' in tag sort", file=sys.stderr)
+        print(f"Warning: malformed internal date '{date_val}' in tag sort", file=sys.stderr)
     return (1, datetime.min)
 
   for tag, tag_pages in tags_map.items():

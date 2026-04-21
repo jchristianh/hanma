@@ -29,7 +29,7 @@ from app.convert import convert_md_to_html
 from app.scaffold import init_scaffold
 from app.theme import ThemeError, _load_theme_impl, copy_theme_assets
 from app.watch import watch_and_rebuild
-from app import __version__, _THEMES_DIR
+from app import __version__, _THEMES_DIR # type: ignore
 
 # Anchor for themes/ and conf/ — same directory as hanma.py since all files are siblings
 _PROJECT_ROOT = Path(__file__).parent.parent
