@@ -19,7 +19,7 @@ import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
 
 try:
   from zoneinfo import ZoneInfo
@@ -30,10 +30,10 @@ except ImportError:
 
 try:
   import yaml
-except ImportError:
+except ImportError as exc:
   raise RuntimeError(
     "Required package 'pyyaml' not found. Install it with:  pip install pyyaml"
-  )
+  ) from exc
 
 
 def parse_front_matter(md_text: str, source_path: Optional[Path] = None) -> tuple:
@@ -119,7 +119,7 @@ def _resolve_tz(tz_name: Optional[str]) -> timezone | ZoneInfo:
     return timezone.utc
   try:
     return ZoneInfo(tz_name)
-  except Exception:
+  except Exception:  # pylint: disable=broad-exception-caught
     # Invalid timezone name; fallback to UTC
     print(f"Warning: timezone '{tz_name}' not found. Falling back to UTC.", file=sys.stderr)
     return timezone.utc

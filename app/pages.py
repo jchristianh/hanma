@@ -18,12 +18,12 @@
 import html
 import os
 import re
-import string
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 from app.nav import get_nav_data
+from app.utils import get_root_rel
 
 
 def _normalize_tag(tag: str) -> str:
@@ -85,14 +85,7 @@ def _make_generated_page(content_html: str, title: str, description: str,
   else:
     display_title = site_name or title
 
-  if output_root:
-    root_rel = os.path.relpath(output_root, out_path.parent).replace(os.sep, "/")
-    if root_rel == ".":
-      root_rel = ""
-    else:
-      root_rel = root_rel.rstrip("/") + "/"
-  else:
-    root_rel = ""
+  root_rel = get_root_rel(output_root, out_path)
 
   page_html = template.render(
     title=display_title,

@@ -16,7 +16,6 @@
 # <https://www.gnu.org/licenses/>.
 """Site scaffold initialization logic."""
 import shutil
-import sys
 from datetime import datetime
 from pathlib import Path
 
