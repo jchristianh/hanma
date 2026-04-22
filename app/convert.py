@@ -18,7 +18,6 @@
 import html
 import os
 import sys
-import string
 try:
   from markupsafe import Markup
 except ImportError:
@@ -29,7 +28,7 @@ except ImportError:
     Markup = str  # type: ignore
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
 
 try:
   import markdown
@@ -60,8 +59,9 @@ from app.nav import get_nav_data
 from app.pages import _normalize_tag, _search_json_url
 from app.parsing import (
   parse_front_matter, extract_title, extract_description,
-  parse_date_field, get_localized_now, localize_datetime
+  parse_date_field, localize_datetime
 )
+from app.utils import get_root_rel, _THEMES_DIR
 
 def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
             nav_pages: Optional[list] = None,
@@ -94,9 +94,8 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
   front_matter and body, if provided, avoids reading/parsing md_path again.
   """
   if template is None:
-    import app as _app
     from app.theme import _load_theme_impl
-    template, _ = _load_theme_impl("default", _app._THEMES_DIR)
+    template, _ = _load_theme_impl("default", _THEMES_DIR)
   
   if front_matter is None or body is None:
     md_text = md_path.read_text(encoding="utf-8")
@@ -226,14 +225,7 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
   is_root_index = output_root and out_path.resolve() == (output_root / "index.html").resolve()
   titles_match = site_name and title.lower() == site_name.lower()
 
-  if output_root:
-    root_rel = os.path.relpath(output_root, out_path.parent).replace(os.sep, "/")
-    if root_rel == ".":
-      root_rel = ""
-    else:
-      root_rel = root_rel.rstrip("/") + "/"
-  else:
-    root_rel = ""
+  root_rel = get_root_rel(output_root, out_path)
 
   if site_name:
     if is_root_index or titles_match:

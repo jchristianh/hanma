@@ -15,11 +15,10 @@
 # along with this program; if not, see
 # <https://www.gnu.org/licenses/>.
 """File watching and auto-rebuild functionality for Hanma."""
-import string
 import threading
 import time
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
 
 from app.build import _run_build
 from app.files import find_markdown_files
@@ -122,7 +121,7 @@ class _HanmaEventHandler(_WatchdogHandler):
 
 
 def _watch_polling(root: Path, output_dir: Path, site_name: str,
-         template: string.Template, theme_dir: Path,
+         template, theme_dir: Path,
          base_url: str = "", poll_interval: float = 1.0,
          posts_label: str = "Blog",
          config_path: Optional[Path] = None,
@@ -171,7 +170,7 @@ def _watch_polling(root: Path, output_dir: Path, site_name: str,
 
 
 def watch_and_rebuild(root: Path, output_dir: Path, site_name: str,
-           template: string.Template, theme_dir: Path,
+           template, theme_dir: Path,
            base_url: str = "",
            poll_interval: float = 1.0,
            posts_label: str = "Blog",
@@ -206,7 +205,7 @@ def watch_and_rebuild(root: Path, output_dir: Path, site_name: str,
            sanitize=sanitize,
            timezone=timezone,
            search_enabled=search_enabled)
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-exception-caught
       print(f"  [watch] build error: {exc}")
 
   handler = _HanmaEventHandler(rebuild, root, theme_dir, output_dir=output_dir)
