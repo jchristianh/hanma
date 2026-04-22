@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://gitea.thezengarden.net/project-hanma/hanma/actions?workflow=ci.yml&branch=develop"><img src="https://gitea.thezengarden.net/project-hanma/hanma/actions/workflows/ci.yml/badge.svg?branch=develop" alt="Develop Status" height="40" /></a>
+  <a href="https://gitea.thezengarden.net/project-hanma/hanma/actions?workflow=ci.yml&branch=develop"><img src="https://gitea.thezengarden.net/project-hanma/hanma/actions/workflows/ci.yml/badge.svg?branch=develop" alt="Develop Status" height="30" /></a>
 </p>
 
 A static site generator that does what it needs to and stops there. No roadmap,
