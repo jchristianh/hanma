@@ -2,15 +2,7 @@ Markdown==3.10.2
 Pygments==2.19.2
 PyYAML==6.0.3
 watchdog==6.0.0
-pytest==9.0.2
 bleach==6.2.0
-types-bleach
-types-Markdown
-types-PyYAML
-types-Jinja2
 tinycss2>=1.4.0
 html5lib>=1.1
 Jinja2==3.1.5
-pylint==4.0.5
-mypy==1.20.0
-mcp-tools-py==0.1.6
