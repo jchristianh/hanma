@@ -334,7 +334,7 @@ def _prepare_tasks(all_files, root, output_dir, site_name, nav_pages, theme_dir,
         tags_out_dir, base_url, output_dir, layout, nav_posts_out, posts_label,
         sanitize, timezone, recent_posts, front, body, search_enabled
       ),
-      rel, md_hash
+      rel, md_hash, md_path
     ))
   return tasks, ok, skipped
 
@@ -431,7 +431,7 @@ def _run_build(root: Path, output_dir: Path, site_name: str,
   )
 
   if tasks:
-    for fn, args, rel, md_hash in tasks:
+    for fn, args, rel, md_hash, md_path in tasks:
         try:
           out = fn(*args)
           print(f"  ✓  {rel}  →  {out}")
