@@ -18,7 +18,6 @@
 import argparse
 import sys
 import threading
-import webbrowser
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import Optional
@@ -29,7 +28,8 @@ from app.convert import convert_md_to_html
 from app.scaffold import init_scaffold
 from app.theme import ThemeError, _load_theme_impl, copy_theme_assets
 from app.watch import watch_and_rebuild
-from app import __version__, _THEMES_DIR # type: ignore
+from app._version import __version__
+from app.utils import _THEMES_DIR
 
 # Anchor for themes/ and conf/ — same directory as hanma.py since all files are siblings
 _PROJECT_ROOT = Path(__file__).parent.parent
@@ -264,7 +264,20 @@ def _get_effective_settings(args: argparse.Namespace, site_config: dict) -> dict
   settings["base_url"]    = args.base_url if args.base_url is not None else site_config.get("base_url", "")
   settings["output_arg"]  = args.output   if args.output   is not None else site_config.get("output", None)
   settings["posts_label"] = str(site_config.get("posts_label", "Blog"))
+  settings["effective_timezone"] = site_config.get("timezone",    None)
 
+  _apply_runtime_settings(settings, args, site_config)
+
+  if settings["output_arg"]:
+    settings["output_dir"] = Path(settings["output_arg"]).resolve()
+  else:
+    settings["output_dir"] = (_PROJECT_ROOT / "output").resolve()
+
+  return settings
+
+
+def _apply_runtime_settings(settings: dict, args: argparse.Namespace, site_config: dict) -> None:
+  """Merge CLI args for serving, watching, and building."""
   cfg_serve       = site_config.get("serve",       False)
   cfg_port        = site_config.get("port",        8000)
   cfg_host        = site_config.get("host",        "127.0.0.1")
@@ -272,7 +285,6 @@ def _get_effective_settings(args: argparse.Namespace, site_config: dict) -> dict
   cfg_incremental = site_config.get("incremental", False)
   cfg_search      = site_config.get("search",      True)
   cfg_sanitize    = site_config.get("sanitize",    False)
-  settings["effective_timezone"] = site_config.get("timezone",    None)
 
   if args.serve is not _NOT_SET:
     settings["effective_serve"] = True
@@ -289,13 +301,6 @@ def _get_effective_settings(args: argparse.Namespace, site_config: dict) -> dict
   settings["effective_incremental"] = args.incremental or cfg_incremental
   settings["effective_search"]      = cfg_search
   settings["effective_sanitize"]    = args.sanitize    or cfg_sanitize
-
-  if settings["output_arg"]:
-    settings["output_dir"] = Path(settings["output_arg"]).resolve()
-  else:
-    settings["output_dir"] = (_PROJECT_ROOT / "output").resolve()
-
-  return settings
 
 
 def _run_single_file_build(target: Path, settings: dict, dry_run: bool) -> None:
@@ -388,7 +393,7 @@ def _serve(serve_dir: Path, port: int, host: str = "127.0.0.1") -> None:
     """Custom HTTP handler that suppresses log messages."""
     def __init__(self, *a, **kw):
       super().__init__(*a, directory=str(serve_dir), **kw)
-    def log_message(self, fmt, *a):
+    def log_message(self, format, *args):  # pylint: disable=redefined-builtin
       pass
 
   try:

@@ -51,8 +51,8 @@ def _load_theme_impl(name: str, themes_dir: Path) -> tuple:
   env = jinja2.Environment(loader=loader, autoescape=True)
   try:
     return env.get_template("template.html"), theme_dir
-  except jinja2.TemplateNotFound:
-    raise ThemeError(f"theme '{name}' is missing template.html ({theme_dir / 'template.html'})")
+  except jinja2.TemplateNotFound as exc:
+    raise ThemeError(f"theme '{name}' is missing template.html ({theme_dir / 'template.html'})") from exc
 
 
 _CSS_SUBDIR = Path("assets") / "css"

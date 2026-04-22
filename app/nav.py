@@ -15,7 +15,6 @@
 # along with this program; if not, see
 # <https://www.gnu.org/licenses/>.
 """Navigation generation and management for Hanma."""
-import html
 import os
 from collections import OrderedDict
 from pathlib import Path
@@ -30,16 +29,7 @@ def get_nav_data(current_out_html: Path,
                posts_out: Optional[Path] = None,
                posts_label: str = "Blog",
                recent_posts: Optional[list[tuple]] = None) -> list[dict]:
-  """Return a structured list of navigation items.
-  
-  Each item is a dict:
-    title: str
-    url: str (optional)
-    is_current: bool
-    is_folder: bool
-    children: list[dict] (optional)
-    target: str (optional)
-  """
+  """Return a structured list of navigation items."""
   if not nav_pages and posts_out is None:
     return []
 
@@ -49,156 +39,146 @@ def get_nav_data(current_out_html: Path,
     except ValueError:
       return target.as_posix()
 
-  def _depth(page_html: Path) -> int:
-    if output_root is None:
-      return 0
-    try:
-      return len(page_html.relative_to(output_root).parts) - 1
-    except ValueError:
-      return 0
+  groups = _group_nav_pages(nav_pages, output_root)
+  home_item, pending = _process_groups(groups, current_out_html, output_root, _rel_url)
+  
+  # Final assembly
+  def _si_key(item_tuple) -> tuple:
+    si = item_tuple[0]
+    return (1 if si is None else 0, si if si is not None else 0)
 
-  def _apply_link_logic(item: dict, link_data, default_url: str):
-    """Apply external link overrides to a nav item."""
-    if isinstance(link_data, dict) and link_data.get("url"):
-      item["url"] = link_data.get("url")
-      target = str(link_data.get("target", "")).lower().strip()
-      if target in ("tab", "window"):
-        item["target"] = "_blank"
-      elif target == "same":
-        item["target"] = "_self"
-      elif target:
-        item["target"] = target
-    else:
-      item["url"] = default_url
+  final_nav = [item for _, item in sorted(pending, key=_si_key)]
+  
+  if posts_out:
+    final_nav.append(_create_posts_nav(posts_out, posts_label, current_out_html, recent_posts, _rel_url))
 
+  return [home_item] + final_nav if home_item else final_nav
+
+
+def _group_nav_pages(nav_pages: list[tuple], output_root: Optional[Path]) -> dict:
+  """Group pages by their top-level directory."""
   groups: dict = OrderedDict()
   for entry in nav_pages:
-    # entry is (out_html, title, md_path, layout, sort_index, optional link_data)
-    page_html, page_title, _, _, sort_index = entry[:5]
-    link_data = entry[5] if len(entry) > 5 else None
-    depth = _depth(page_html)
-
-    if output_root is not None:
-      try:
-        rel_parts = page_html.relative_to(output_root).parts
-      except ValueError:
-        rel_parts = (page_html.name,)
-    else:
-      rel_parts = (page_html.name,)
-
+    page_html = entry[0]
+    depth = _get_depth(page_html, output_root)
+    rel_parts = _get_rel_parts(page_html, output_root)
     dir_key = "" if depth == 0 else rel_parts[0]
     if dir_key == POSTS_DIR_NAME:
       continue
-
     if dir_key not in groups:
       groups[dir_key] = {"index": None, "children": []}
-
     if depth > 0 and page_html.stem.lower() == "index":
       groups[dir_key]["index"] = entry
     else:
       groups[dir_key]["children"].append(entry)
+  return groups
 
-  home_item: Optional[dict] = None
-  
-  def _si_key(si) -> tuple:
-    return (1 if si is None else 0, si if si is not None else 0)
 
-  pending: list[tuple] = []  # (sort_index, item_dict)
-
+def _process_groups(groups: dict, current_out_html: Path, output_root: Optional[Path], rel_url_fn) -> tuple:
+  """Process grouped pages into navigation items."""
+  home_item = None
+  pending = []
   for dir_key, group in groups.items():
     if dir_key == "":
       for entry in group["children"]:
-        page_html, page_title, _, _, sort_index = entry[:5]
-        link_data = entry[5] if len(entry) > 5 else None
-        is_current = page_html == current_out_html
-        item = {
-          "title": page_title,
-          "is_current": is_current,
-          "is_folder": False
-        }
-        _apply_link_logic(item, link_data, _rel_url(page_html))
-
-        if page_html.stem.lower() == "index" and (
-          output_root is None or page_html.parent == output_root
-        ):
+        item = _create_item(entry, current_out_html, rel_url_fn)
+        page_html = entry[0]
+        if page_html.stem.lower() == "index" and (output_root is None or page_html.parent == output_root):
           home_item = item
         else:
-          pending.append((sort_index, item))
+          pending.append((entry[4], item))
     else:
-      idx = group["index"]
-      children = group["children"]
-      if idx is not None:
-        idx_html, _, _, _, idx_si = idx[:5]
-        idx_link = idx[5] if len(idx) > 5 else None
-        # dir_key based title for the folder
-        folder_title = dir_key.replace("-", " ").replace("_", " ").title()
-        item = {
-          "title": folder_title,
-          "is_current": idx_html == current_out_html,
-          "is_folder": True,
-          "children": []
-        }
-        _apply_link_logic(item, idx_link, _rel_url(idx_html))
+      folder_item = _create_folder_item(dir_key, group, current_out_html, rel_url_fn)
+      if folder_item:
+        pending.append((group["index"][4] if group["index"] else None, folder_item))
+  return home_item, pending
 
-        for child_entry in sorted(children, key=lambda e: _si_key(e[4])):
-          child_html, child_title, _, _, _ = child_entry[:5]
-          child_link = child_entry[5] if len(child_entry) > 5 else None
-          child_item = {
-            "title": child_title,
-            "is_current": child_html == current_out_html,
-            "is_folder": False
-          }
-          _apply_link_logic(child_item, child_link, _rel_url(child_html))
-          item["children"].append(child_item)
-        pending.append((idx_si, item))
-      else:
-        if children:
-          group_si = next((e[4] for e in children if e[4] is not None), None)
-          item = {
-            "title": dir_key.replace("-", " ").replace("_", " ").title(),
-            "url": None,
-            "is_current": any(ch_entry[0] == current_out_html for ch_entry in children),
-            "is_folder": True,
-            "children": []
-          }
-          for child_entry in sorted(children, key=lambda e: _si_key(e[4])):
-            child_html, child_title, _, _, _ = child_entry[:5]
-            child_link = child_entry[5] if len(child_entry) > 5 else None
-            child_item = {
-              "title": child_title,
-              "is_current": child_html == current_out_html,
-              "is_folder": False
-            }
-            _apply_link_logic(child_item, child_link, _rel_url(child_html))
-            item["children"].append(child_item)
-          pending.append((group_si, item))
 
-  pending.sort(key=lambda t: _si_key(t[0]))
-  items = ([home_item] if home_item else []) + [t[1] for t in pending]
+def _create_item(entry: tuple, current_out_html: Path, rel_url_fn) -> dict:
+  """Create a single page navigation item."""
+  page_html, page_title = entry[0], entry[1]
+  link_data = entry[5] if len(entry) > 5 else None
+  item = {"title": page_title, "is_current": page_html == current_out_html, "is_folder": False}
+  _apply_link_logic(item, link_data, rel_url_fn(page_html))
+  return item
 
-  if posts_out is not None:
-    item = {
-      "title": posts_label,
-      "url": _rel_url(posts_out),
-      "is_current": posts_out == current_out_html,
-      "is_folder": bool(recent_posts),
-      "children": []
-    }
-    if recent_posts:
-      for post_html, post_title in recent_posts:
-        item["children"].append({
-          "title": post_title,
-          "url": _rel_url(post_html),
-          "is_current": post_html == current_out_html,
-          "is_folder": False
-        })
-      item["children"].append({
-        "title": "More posts...",
-        "url": _rel_url(posts_out),
-        "is_current": False,
-        "is_folder": False,
-        "is_more_link": True
-      })
-    items.append(item)
 
-  return items
+def _create_folder_item(dir_key: str, group: dict, current_out_html: Path, rel_url_fn) -> Optional[dict]:
+  """Create a folder (dropdown) navigation item."""
+  idx = group["index"]
+  if idx is None:
+    # Handle folder without index.md (header-only)
+    if not group["children"]:
+      return None
+    folder_title = dir_key.replace("-", " ").replace("_", " ").title()
+    item = {"title": folder_title, "url": None, "is_current": False, "is_folder": True, "children": []}
+    group_si = next((e[4] for e in group["children"] if e[4] is not None), None)
+    # We'll use the first child's sort index as a proxy
+    for child_entry in sorted(group["children"], key=lambda e: (1 if e[4] is None else 0, e[4] if e[4] is not None else 0)):
+      item["children"].append(_create_item(child_entry, current_out_html, rel_url_fn))
+      if child_entry[0] == current_out_html:
+        item["is_current"] = True
+    # Attach a mock sort_index for the group
+    group["index"] = (None, None, None, None, group_si)
+    return item
+
+  folder_title = dir_key.replace("-", " ").replace("_", " ").title()
+  item = {"title": folder_title, "is_current": idx[0] == current_out_html, "is_folder": True, "children": []}
+  _apply_link_logic(item, idx[5] if len(idx) > 5 else None, rel_url_fn(idx[0]))
+  
+  def _si_key(e):
+    return (1 if e[4] is None else 0, e[4] if e[4] is not None else 0)
+
+  for child_entry in sorted(group["children"], key=_si_key):
+    item["children"].append(_create_item(child_entry, current_out_html, rel_url_fn))
+  return item
+
+
+def _create_posts_nav(posts_out: Path, posts_label: str, current_out_html: Path, recent_posts: Optional[list], rel_url_fn) -> dict:
+  """Create the 'Blog' (posts) navigation item with recent posts as children."""
+  item = {"title": posts_label, "is_current": posts_out == current_out_html, "is_folder": bool(recent_posts), "children": []}
+  item["url"] = rel_url_fn(posts_out)
+  if recent_posts:
+    for out_path, title in recent_posts:
+      item["children"].append({"title": title, "url": rel_url_fn(out_path), "is_current": out_path == current_out_html, "is_folder": False})
+    item["children"].append({
+      "title": "More posts...",
+      "url": rel_url_fn(posts_out),
+      "is_current": False,
+      "is_folder": False,
+      "is_more_link": True
+    })
+  return item
+
+
+def _get_depth(page_html: Path, output_root: Optional[Path]) -> int:
+  if output_root is None:
+    return 0
+  try:
+    return len(page_html.relative_to(output_root).parts) - 1
+  except ValueError:
+    return 0
+
+
+def _get_rel_parts(page_html: Path, output_root: Optional[Path]) -> tuple:
+  if output_root is not None:
+    try:
+      return page_html.relative_to(output_root).parts
+    except ValueError:
+      pass
+  return (page_html.name,)
+
+
+def _apply_link_logic(item: dict, link_data, default_url: str):
+  """Apply external link overrides to a nav item."""
+  if isinstance(link_data, dict) and link_data.get("url"):
+    item["url"] = link_data.get("url")
+    target = str(link_data.get("target", "")).lower().strip()
+    if target in ("tab", "window"):
+      item["target"] = "_blank"
+    elif target == "same":
+      item["target"] = "_self"
+    elif target:
+      item["target"] = target
+  else:
+    item["url"] = default_url

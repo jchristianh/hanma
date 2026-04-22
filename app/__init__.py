@@ -27,9 +27,8 @@ from pathlib import Path
 # ── Version ───────────────────────────────────────────────────────────────────
 from app._version import __version__
 
-# ── _THEMES_DIR: defined here so tests can monkey-patch app._THEMES_DIR
-# and load_theme() (defined below) picks it up at call time. ──────────────────
-_THEMES_DIR = Path(__file__).parent.parent / "themes"
+# ── _THEMES_DIR: defined in app.utils so it can be imported without cycles. ─
+from app.utils import _THEMES_DIR, get_root_rel
 
 # ── Re-exports ────────────────────────────────────────────────────────────────
 from app.config import load_site_config
