@@ -2,6 +2,10 @@
   <img src="assets/hanma_logo_universal_dark_0402.svg" alt="hanma.py logo" width="400" />
 </p>
 
+<p align="center">
+  <a href="https://gitea.thezengarden.net/project-hanma/hanma/actions?workflow=ci.yml&branch=develop"><img src="https://gitea.thezengarden.net/project-hanma/hanma/actions/workflows/ci.yml/badge.svg?branch=develop" alt="Develop Status" height="25" /></a>
+</p>
+
 A static site generator that does what it needs to and stops there. No roadmap,
 no grand ambitions. The name is the honest answer to "when will it be finished?"
 
