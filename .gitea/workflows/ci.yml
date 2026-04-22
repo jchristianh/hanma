@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip --break-system-packages
-          python3 -m pip install -r requirements.txt --break-system-packages
+          python3 -m pip install -r requirements-dev.txt --break-system-packages
 
       - name: Check syntax (py_compile)
         run: python3 -m py_compile hanma.py && echo "Syntax OK"

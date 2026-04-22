@@ -1,0 +1,9 @@
+-r requirements.txt
+pytest==9.0.2
+types-bleach
+types-Markdown
+types-PyYAML
+types-Jinja2
+pylint==4.0.5
+mypy==1.20.0
+mcp-tools-py==0.1.6
