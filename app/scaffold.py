@@ -34,9 +34,9 @@ This is the home page of your new site, built with **hanma.py**.
 Edit the Markdown files in `site/` and run `./hanma.py` to regenerate.
 
 ### What's in this scaffold?
-- **[About](about.md)**: A simple secondary page.
-- **[Markdown Elements](elements.md)**: A demonstration of supported Markdown extensions (TOC, Code, Tables, etc).
-- **[Formatting & Meta](formatting.md)**: How to use front matter for sorting and metadata.
+- **[About](about.html)**: A simple secondary page.
+- **[Markdown Elements](elements.html)**: A demonstration of supported Markdown extensions (TOC, Code, Tables, etc).
+- **[Formatting & Meta](formatting.html)**: How to use front matter for sorting and metadata.
 - **[Posts](posts/)**: An example blog directory.
 """,
   "about.md": """\
