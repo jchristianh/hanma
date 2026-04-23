@@ -32,6 +32,12 @@ description: Welcome to my site.
 This is the home page of your new site, built with **hanma.py**.
 
 Edit the Markdown files in `site/` and run `./hanma.py` to regenerate.
+
+### What's in this scaffold?
+- **[About](about.html)**: A simple secondary page.
+- **[Markdown Elements](elements.html)**: A demonstration of supported Markdown extensions (TOC, Code, Tables, etc).
+- **[Formatting & Meta](formatting.html)**: How to use front matter for sorting and metadata.
+- **[Posts](posts/)**: An example blog directory.
 """,
   "about.md": """\
 ---
@@ -41,7 +47,84 @@ description: A little about this site.
 
 # About
 
-Tell readers who you are and what this site is about.
+Tell readers who you are and what this site is about. This page is automatically added to your navigation bar.
+""",
+  "elements.md": """\
+---
+title: Markdown Elements
+description: A demonstration of Hanma's Markdown capabilities.
+---
+
+# Markdown Elements
+
+Hanma supports a wide variety of Markdown extensions out of the box.
+
+[TOC]
+
+## Syntax Highlighting
+
+Fenced code blocks are automatically highlighted using Pygments.
+
+```python
+def hello_hanma():
+    print("It builds your blog. That's mostly it.")
+```
+
+## Tables
+
+Standard GFM tables are supported.
+
+| Feature | Support |
+| --- | --- |
+| TOC | Yes |
+| Code Hilite | Yes |
+| Tables | Yes |
+| Footnotes | Yes |
+
+## Lists
+
+### Task Lists
+- [x] Write code
+- [ ] Write docs
+- [ ] Profit
+
+### Definition Lists
+Hanma
+: A lightweight Python SSG.
+
+Markdown
+: A lightweight markup language.
+
+## Footnotes & Abbreviations
+
+You can use footnotes[^1] to provide extra context. 
+Also, ABBR tags work!
+
+[^1]: This is the footnote content.
+
+*[ABBR]: Abbreviation
+""",
+  "formatting.md": """\
+---
+title: Formatting & Meta
+description: Demonstrating sort_index and metadata.
+sort_index: 10
+author: Chris Hammer
+date: {today}
+---
+
+# Formatting & Meta
+
+This page demonstrates how Hanma handles front matter metadata.
+
+### Manual Sorting
+The `sort_index: 10` in this page's front matter ensures it appears *after* the Home and About pages in the navigation bar (which have default lower indexes).
+
+### Metadata
+This page specifies an `author` and a `date`. Depending on your theme, these might appear in the page footer or as meta tags in the HTML head.
+
+### Dates
+The date for this page was set to `{today}` when the scaffold was created.
 """,
   "posts/hello-world.md": """\
 ---
@@ -54,8 +137,32 @@ tags:
 
 # Hello, World
 
-Welcome to your first post!  Add more files to `site/posts/` and they will
+Welcome to your first post! Add more files to `site/posts/` and they will
 appear in the auto-generated **Posts** listing.
+""",
+  "posts/second-post.md": """\
+---
+title: Another Post
+description: Showing off multiple posts.
+date: {today}
+tags:
+ - demo
+---
+
+# Another Post
+
+This second post demonstrates how Hanma automatically creates a "Posts" index page and sorts entries by date (newest first).
+""",
+  "static/README.md": """\
+# Static Directory
+
+Files placed in the `site/static/` directory are copied **unchanged** to the `output/static/` directory during the build process.
+
+Use this for:
+- Custom CSS
+- JavaScript files
+- Images and downloads
+- Any other assets you want to link to directly.
 """,
 }
 
