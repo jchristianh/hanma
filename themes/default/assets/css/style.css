@@ -44,6 +44,7 @@
   --btn-bg:      #2a2926;
   --btn-text:    #e8e6e0;
   --btn-border:  #3a3835;
+  --img-filter:  invert(1);
 }
 
 /* Honour OS preference when no manual toggle has been set */
@@ -63,6 +64,7 @@
     --btn-bg:      #2a2926;
     --btn-text:    #e8e6e0;
     --btn-border:  #3a3835;
+    --img-filter:  invert(1);
   }
 }
 
@@ -401,6 +403,19 @@ body {
   height: auto;
   border-radius: 4px;
   display: block;
+  transition: filter 0.2s ease;
+}
+
+/* Invert specific images (graphs/icons) in dark mode via {.invert-dark} */
+[data-theme="dark"] .prose img.invert-dark {
+  filter: var(--img-filter, invert(1));
+}
+
+/* Honor OS preference for inversion if no manual toggle set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .prose img.invert-dark {
+    filter: var(--img-filter, invert(1));
+  }
 }
 
 .prose .footnote {

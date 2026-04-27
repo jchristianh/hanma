@@ -81,6 +81,7 @@ project/
 For detailed technical guides, see the `docs/` folder:
 
 - [**CLI Usage & Options**](docs/cli_options.md) — Exhaustive list of commands and flags.
+- [**Markdown Features**](docs/markdown.md) — Syntax guide and image readability tricks.
 - [**Configuration**](docs/configuration.md) — Using `hanma.yml` for project-level defaults.
 - [**Front Matter & Metadata**](docs/front_matter.md) — Controlling per-page behavior.
 - [**Themes & Customization**](docs/themes.md) — Building your own layout and styles.
