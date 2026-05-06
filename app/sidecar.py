@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from app.utils import atomic_write_text
+
 
 def build_rss_xml(posts: list[tuple], output_root: Path, base_url: str,
           site_name: str = "Blog", site_description: str = "") -> Optional[Path]:
@@ -75,7 +77,7 @@ def build_rss_xml(posts: list[tuple], output_root: Path, base_url: str,
   lines.append('</rss>')
 
   out = output_root / "feed.xml"
-  out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+  atomic_write_text(out, "\n".join(lines) + "\n", encoding="utf-8")
   return out
 
 
@@ -100,7 +102,7 @@ def build_sitemap_xml(pages: list[tuple], output_root: Path, base_url: str) -> O
     lines.append(f"  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod_esc}</lastmod>\n  </url>")
   lines.append("</urlset>")
   out = output_root / "sitemap.xml"
-  out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+  atomic_write_text(out, "\n".join(lines) + "\n", encoding="utf-8")
   return out
 
 
@@ -125,6 +127,6 @@ def build_search_json(entries: list[dict], output_root: Path,
       "tags": [str(t) for t in entry.get("tags", [])],
     })
   out = output_root / "search.json"
-  out.write_text(json.dumps(normalized, indent=2, ensure_ascii=False) + "\n",
+  atomic_write_text(out, json.dumps(normalized, indent=2, ensure_ascii=False) + "\n",
          encoding="utf-8")
   return out
