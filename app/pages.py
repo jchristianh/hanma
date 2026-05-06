@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Optional
 
 from app.nav import get_nav_data
-from app.utils import get_root_rel
+from app.utils import get_root_rel, atomic_write_text
 
 
 def _normalize_tag(tag: str) -> str:
@@ -105,8 +105,7 @@ def _make_generated_page(content_html: str, title: str, description: str,
     sitemap_link=sitemap_link,
     search_json_url=search_json_url if search_enabled else "",
   )
-  out_path.parent.mkdir(parents=True, exist_ok=True)
-  out_path.write_text(page_html, encoding="utf-8")
+  atomic_write_text(out_path, page_html, encoding="utf-8")
   return out_path
 
 

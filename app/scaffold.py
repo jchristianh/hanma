@@ -19,6 +19,8 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
+from app.utils import atomic_write_text
+
 
 _SCAFFOLD_FILES: dict[str, str] = {
   "index.md": """\
@@ -195,8 +197,7 @@ def init_scaffold(site_dir: Path, force: bool = False) -> None:
 
   for rel, content in _SCAFFOLD_FILES.items():
     dest = site_dir / rel
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(content.format(today=today), encoding="utf-8")
+    atomic_write_text(dest, content.format(today=today), encoding="utf-8")
     print(f"  [create] {rel}")
 
   print(f"\nScaffold written to '{site_dir}'.  Run ./hanma.py to build.")

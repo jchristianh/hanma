@@ -36,6 +36,7 @@ from app.parsing import (
 from app.sidecar import build_sitemap_xml, build_search_json, build_rss_xml
 from app.highlight import HIGHLIGHT_CSS
 from app.theme import copy_theme_assets, _load_theme_impl, _CSS_SUBDIR
+from app.utils import atomic_write_text
 
 
 def _process_page_worker(md_path: Path, out_html: Path, site_name: str,
@@ -225,8 +226,7 @@ def _prepare_output(output_dir: Path, theme_dir: Path, root: Path, expected_html
   output_dir.mkdir(parents=True, exist_ok=True)
   copy_theme_assets(theme_dir, output_dir)
   pygments_path = output_dir / _CSS_SUBDIR / "pygments.css"
-  pygments_path.parent.mkdir(parents=True, exist_ok=True)
-  pygments_path.write_text(HIGHLIGHT_CSS, encoding="utf-8")
+  atomic_write_text(pygments_path, HIGHLIGHT_CSS, encoding="utf-8")
   copy_static_assets(root, output_dir)
   if output_dir.is_dir():
     stale = clean_stale_html(output_dir, expected_html)

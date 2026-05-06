@@ -61,7 +61,7 @@ from app.parsing import (
   parse_front_matter, extract_title, extract_description,
   parse_date_field, localize_datetime
 )
-from app.utils import get_root_rel, _THEMES_DIR
+from app.utils import get_root_rel, _THEMES_DIR, atomic_write_text
 
 def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
             nav_pages: Optional[list] = None,
@@ -257,6 +257,5 @@ def convert_md_to_html(md_path: Path, out_path: Path, site_name: str,
     search_json_url=search_url,
   )
 
-  out_path.parent.mkdir(parents=True, exist_ok=True)
-  out_path.write_text(page_html, encoding="utf-8")
+  atomic_write_text(out_path, page_html, encoding="utf-8")
   return out_path

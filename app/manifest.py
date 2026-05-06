@@ -21,6 +21,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from app.utils import atomic_write_text
+
 
 _MANIFEST_TEMPLATE_KEY = "_template_mtime"
 _MANIFEST_CONFIG_KEY   = "_config_mtime"
@@ -84,8 +86,10 @@ def load_build_manifest(manifest_path: Path) -> dict:
 def save_build_manifest(manifest_path: Path, manifest: dict) -> None:
   """Persist the manifest dict as JSON to manifest_path."""
   try:
-    manifest_path.write_text(
-      json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    atomic_write_text(
+      manifest_path,
+      json.dumps(manifest, indent=2) + "\n",
+      encoding="utf-8"
     )
   except OSError as exc:
     print(f"  [manifest] warning: could not save {manifest_path}: {exc}", file=sys.stderr)
