@@ -16,6 +16,7 @@
 # <https://www.gnu.org/licenses/>.
 """Common utilities and constants for Hanma."""
 import os
+import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -23,6 +24,20 @@ from typing import Optional
 # ── Constants ─────────────────────────────────────────────────────────────────
 # Anchor for themes/ — same directory as hanma.py since all files are siblings
 _THEMES_DIR = Path(__file__).parent.parent / "themes"
+
+
+def atomic_write_text(path: Path, content: str, encoding: str = "utf-8") -> None:
+  """Write content to a temporary file and atomically replace the target path."""
+  path.parent.mkdir(parents=True, exist_ok=True)
+  fd, temp_path = tempfile.mkstemp(dir=str(path.parent), prefix=".tmp_", text=True)
+  try:
+    with os.fdopen(fd, "w", encoding=encoding) as f:
+      f.write(content)
+    os.replace(temp_path, path)
+  except Exception:
+    if os.path.exists(temp_path):
+      os.unlink(temp_path)
+    raise
 
 
 def get_root_rel(output_root: Optional[Path], out_path: Path) -> str:
